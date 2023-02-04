@@ -1,54 +1,81 @@
 
 const runTimeDependencies = {
     "externals": {
+        "rxjs": "^6.5.5",
         "@youwol/cdn-client": "^1.0.2",
-        "@youwol/flux-view": "^1.0.3",
-        "rxjs": "^6.5.5"
+        "@youwol/logging": "^0.0.2",
+        "three": "^0.128.0"
     },
     "includedInBundle": {}
 }
 const externals = {
+    "rxjs": {
+        "commonjs": "rxjs",
+        "commonjs2": "rxjs",
+        "root": "rxjs_APIv6"
+    },
     "@youwol/cdn-client": {
         "commonjs": "@youwol/cdn-client",
         "commonjs2": "@youwol/cdn-client",
         "root": "@youwol/cdn-client_APIv1"
     },
-    "@youwol/flux-view": {
-        "commonjs": "@youwol/flux-view",
-        "commonjs2": "@youwol/flux-view",
-        "root": "@youwol/flux-view_APIv1"
+    "@youwol/logging": {
+        "commonjs": "@youwol/logging",
+        "commonjs2": "@youwol/logging",
+        "root": "@youwol/logging_APIv002"
     },
-    "rxjs": {
-        "commonjs": "rxjs",
-        "commonjs2": "rxjs",
-        "root": "rxjs_APIv6"
+    "three": {
+        "commonjs": "three",
+        "commonjs2": "three",
+        "root": "THREE_APIv0128"
+    },
+    "rxjs/operators": {
+        "commonjs": "rxjs/operators",
+        "commonjs2": "rxjs/operators",
+        "root": [
+            "rxjs_APIv6",
+            "operators"
+        ]
     }
 }
 const exportedSymbols = {
+    "rxjs": {
+        "apiKey": "6",
+        "exportedSymbol": "rxjs"
+    },
     "@youwol/cdn-client": {
         "apiKey": "1",
         "exportedSymbol": "@youwol/cdn-client"
     },
-    "@youwol/flux-view": {
-        "apiKey": "1",
-        "exportedSymbol": "@youwol/flux-view"
+    "@youwol/logging": {
+        "apiKey": "002",
+        "exportedSymbol": "@youwol/logging"
     },
-    "rxjs": {
-        "apiKey": "6",
-        "exportedSymbol": "rxjs"
+    "three": {
+        "apiKey": "0128",
+        "exportedSymbol": "THREE"
     }
 }
 
 const mainEntry : {entryFile: string,loadDependencies:string[]} = {
     "entryFile": "./index.ts",
     "loadDependencies": [
+        "rxjs",
         "@youwol/cdn-client",
-        "@youwol/flux-view",
-        "rxjs"
+        "@youwol/logging"
     ]
 }
 
-const secondaryEntries : {[k:string]:{entryFile: string, name: string, loadDependencies:string[]}}= {}
+const secondaryEntries : {[k:string]:{entryFile: string, name: string, loadDependencies:string[]}}= {
+    "test-sphere-module": {
+        "entryFile": "./tests/modules-implementation/sphere.module.ts",
+        "loadDependencies": [
+            "three",
+            "rxjs"
+        ],
+        "name": "test-sphere-module"
+    }
+}
 
 const entries = {
      '@youwol/vs-flow-core': './index.ts',
