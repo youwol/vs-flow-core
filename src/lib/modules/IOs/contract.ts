@@ -138,14 +138,14 @@ export interface IExpectation<T> {
  * @param T The type of [[FulfilledExpectation.value]], i.e. the type of the expectation return's value (normalized value)
  * when the expectation is fulfilled
  */
-export class BaseExpectation<T> implements IExpectation<T> {
+export abstract class BaseExpectation<T> implements IExpectation<T> {
     /**
      *
      * @param description description of the expectation
      * @param when defines the condition of fulfillment
      * @param normalizeTo defines how to normalize the data
      */
-    constructor(
+    protected constructor(
         public readonly description: string,
         public readonly when: BaseExpectation<T> | ((inputData) => boolean),
         public readonly normalizeTo: (
@@ -165,7 +165,10 @@ export class BaseExpectation<T> implements IExpectation<T> {
      * @param context
      * @return Expectation status from given inputData
      */
-    resolve(inputData: unknown, context: Context): ExpectationStatus<T> {
+    abstract resolve(
+        inputData: unknown,
+        context: Context,
+    ): ExpectationStatus<T> /*{
         const { succeeded, value } =
             this.when instanceof BaseExpectation
                 ? this.when.resolve(inputData, context)
@@ -177,7 +180,7 @@ export class BaseExpectation<T> implements IExpectation<T> {
                   inputData,
               )
             : new RejectedExpectation(this, inputData)
-    }
+    }*/
 }
 
 /**
@@ -861,12 +864,12 @@ export function expect<T>({
     normalizeTo,
 }: {
     description: string
-    when: ((inputData: unknown) => boolean) | BaseExpectation<T>
+    when: (inputData: unknown) => boolean
     normalizeTo?: (data: unknown, ctx: Context) => T
 }): BaseExpectation<T> {
-    if (when instanceof BaseExpectation) {
-        return new BaseExpectation<T>(description, when, normalizeTo)
-    }
+    // if (when instanceof BaseExpectation) {
+    //     return new BaseExpectation<T>(description, when, normalizeTo)
+    // }
 
     return new Of<T>(description, when, normalizeTo)
 }
@@ -952,10 +955,10 @@ export class Contract implements IExpectation<unknown> {
             'requireds',
             Object.values(this.requireds),
         ).resolve(data, context)
-        const optionalStatus = new OptionalsOf<unknown>(
-            'optionals',
-            Object.values(this.optionals),
-        ).resolve(data, context)
+        const optionalStatus = expectOptionalsOf({
+            description: 'optionals',
+            when: Object.values(this.optionals),
+        }).resolve(data, context)
 
         const valuesRequired = requiredStatus.succeeded
             ? Object.entries(this.requireds).reduce((acc, [k, _v], i) => {

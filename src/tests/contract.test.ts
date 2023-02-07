@@ -9,6 +9,7 @@ import {
     expectAnyOf,
     expectAttribute,
     expectCount,
+    expectFree,
     expectInstanceOf,
     expectSingle,
     expectSome,
@@ -40,6 +41,11 @@ class ExpectCollec {
         when: (d) => d instanceof Option2,
     })
 }
+
+test('expect free', () => {
+    const free = expectFree()
+    expect(free.resolve(42).value).toBe(42)
+})
 
 test('straightLeafNumber', () => {
     const context = new Context('Test context', {})

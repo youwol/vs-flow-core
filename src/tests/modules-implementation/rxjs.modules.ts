@@ -1,44 +1,83 @@
 import { Modules } from '../../index'
-import { IOs } from '../../lib/modules'
+import { IOs, OutputMessage, ProcessingMessage } from '../../lib/modules'
 
 import { filter, map, mergeMap } from 'rxjs/operators'
-import { Observable } from 'rxjs'
-import { UserContext } from '../../lib/connections'
+import { Observable, of } from 'rxjs'
 import { Configuration, Attributes } from '../../lib/modules/configurations'
 import { noContract } from '../../lib/modules/IOs/contract'
+import { Context } from '@youwol/logging'
 
 type TSchema = {
     function: Attributes.JsCode
 }
+type TExtractedConfig = {
+    function: (...args) => unknown
+}
+type TProcessingMessage = ProcessingMessage<unknown, TExtractedConfig>
 const input$ = new IOs.Input({
     description: 'the input stream',
     contract: noContract,
 })
 
-export class RxjsFilter extends Modules.Implementation<TSchema> {
+export class RxjsOf extends Modules.DefaultImplementation<TSchema> {
     constructor(fwdParameters) {
         super(
             {
-                configuration: new Configuration<TSchema>({
+                configurationModel: new Configuration<TSchema>({
                     model: {
                         function: new Attributes.JsCode({
-                            content:
-                                'return ({data, context}) => { return data != undefined }',
+                            value: () => ({ value: 42 }),
+                        }),
+                    },
+                }),
+                outputs: ({
+                    configuration,
+                    context,
+                }: {
+                    configuration: TExtractedConfig
+                    context: Context
+                }) => {
+                    return {
+                        output$: of({
+                            data: configuration.function(),
+                            context,
+                            configuration: {} as TExtractedConfig,
+                        }),
+                    }
+                },
+                builderView: (_instance: Modules.Implementation<TSchema>) =>
+                    undefined,
+            },
+            fwdParameters,
+        )
+    }
+}
+
+export class RxjsFilter extends Modules.DefaultImplementation<TSchema> {
+    constructor(fwdParameters) {
+        super(
+            {
+                configurationModel: new Configuration<TSchema>({
+                    model: {
+                        function: new Attributes.JsCode({
+                            value: ({ data }) => {
+                                return data != undefined
+                            },
                         }),
                     },
                 }),
                 inputs: {
                     input$,
                 },
-                outputs: (inputs, config: TSchema) => {
+                outputs: ({ inputs }) => {
                     return {
                         output$: inputs.input$.pipe(
-                            filter(({ data, context }) =>
-                                config.function.eval<unknown, boolean>({
-                                    data,
-                                    context,
-                                }),
-                            ),
+                            filter((p: TProcessingMessage) => {
+                                return p.configuration.function({
+                                    data: p.data,
+                                    context: p.context,
+                                }) as boolean
+                            }),
                         ),
                     }
                 },
@@ -50,29 +89,29 @@ export class RxjsFilter extends Modules.Implementation<TSchema> {
     }
 }
 
-export class RxjsMap extends Modules.Implementation<TSchema> {
+export class RxjsMap extends Modules.DefaultImplementation<TSchema> {
     constructor(fwdParameters) {
         super(
             {
-                configuration: new Configuration<TSchema>({
+                configurationModel: new Configuration<TSchema>({
                     model: {
                         function: new Attributes.JsCode({
-                            content:
-                                'return ({data, context}) => { return {data, context} }',
+                            value: 'return ({data, context}) => { return {data, context} }',
                         }),
                     },
                 }),
                 inputs: {
                     input$,
                 },
-                outputs: (inputs, config: TSchema) => {
+                outputs: ({ inputs }) => {
                     return {
                         output$: inputs.input$.pipe(
-                            map(({ data, context }) =>
-                                config.function.eval({
-                                    data,
-                                    context,
-                                }),
+                            map(
+                                (p: TProcessingMessage) =>
+                                    p.configuration.function({
+                                        data: p.data,
+                                        context: p.context,
+                                    }) as OutputMessage,
                             ),
                         ),
                     }
@@ -93,35 +132,29 @@ export class RxjsMap extends Modules.Implementation<TSchema> {
  * }
  * ```
  */
-export class RxjsMergeMap extends Modules.Implementation<TSchema> {
+export class RxjsMergeMap extends Modules.DefaultImplementation<TSchema> {
     constructor(fwdParameters) {
         super(
             {
-                configuration: new Configuration<TSchema>({
+                configurationModel: new Configuration<TSchema>({
                     model: {
                         function: new Attributes.JsCode({
-                            content:
-                                'return ({data, context}) => { return of({data, context}) }',
+                            value: 'return ({data, context}) => { return of({data, context}) }',
                         }),
                     },
                 }),
                 inputs: {
                     input$,
                 },
-                outputs: (inputs, config: TSchema) => {
+                outputs: ({ inputs }) => {
                     return {
                         output$: inputs.input$.pipe(
-                            mergeMap(({ data, context }) =>
-                                config.function.eval<
-                                    unknown,
-                                    Observable<{
-                                        data: unknown
-                                        context: UserContext
-                                    }>
-                                >({
-                                    data,
-                                    context,
-                                }),
+                            mergeMap(
+                                (p: TProcessingMessage) =>
+                                    p.configuration.function({
+                                        data: p.data,
+                                        context: p.context,
+                                    }) as Observable<OutputMessage>,
                             ),
                         ),
                     }

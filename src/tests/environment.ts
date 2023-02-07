@@ -2,6 +2,8 @@ import { Modules } from '..'
 import { setup } from '../auto-generated'
 import { IEnvironment, ToolBox } from '../lib/environment'
 import * as SphereModule from './modules-implementation/sphere.module'
+import { Implementation } from '../lib/modules'
+import { JsonMap } from '../lib/connections'
 
 export class TestEnvironment implements IEnvironment {
     public readonly toolboxes: ToolBox[]
@@ -14,12 +16,23 @@ export class TestEnvironment implements IEnvironment {
             SphereModule
     }
 
-    async instantiateModule({ typeId }: { typeId: string }) {
-        const module: Modules.Module<unknown> = this.toolboxes
+    async instantiateModule<T>({
+        typeId,
+        moduleId,
+        configuration,
+    }: {
+        typeId: string
+        moduleId?: string
+        configuration?: JsonMap
+    }): Promise<T & Modules.Implementation> {
+        const module: Modules.Module<Implementation> = this.toolboxes
             .reduce((acc, toolbox) => [...acc, ...toolbox.modules], [])
-            .find((module: Modules.Module<unknown>) => {
+            .find((module: Modules.Module<Implementation>) => {
                 return module.declaration.typeId == typeId
             })
-        return await module.getInstance({ fwdParams: {}, environment: this })
+        return (await module.getInstance({
+            fwdParams: { uid: moduleId, configuration },
+            environment: this,
+        })) as T & Modules.Implementation
     }
 }

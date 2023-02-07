@@ -1,6 +1,6 @@
 import { Configuration, Attributes } from '../../lib/modules/configurations'
 import { Modules } from '../..'
-import { InputMessage, IOs } from '../../lib/modules'
+import { IOs, ProcessingMessage } from '../../lib/modules'
 import { Material, SphereGeometry, Mesh } from 'three'
 import { map } from 'rxjs/operators'
 
@@ -17,13 +17,24 @@ type TSchema = {
     transform: Transform
 }
 type TData = { material: Material }
-type TMessage = InputMessage<TData, TSchema>
 
-export class Sphere extends Modules.Implementation<TSchema> {
+type TExtractedConfig = {
+    radius: number
+    transform: {
+        translation: {
+            x: number
+            y: number
+            z: number
+        }
+    }
+}
+type TMessage = ProcessingMessage<TData, TExtractedConfig>
+
+export class Sphere extends Modules.DefaultImplementation<TSchema> {
     constructor(fwdParameters) {
         super(
             {
-                configuration: new Configuration<TSchema>({
+                configurationModel: new Configuration<TSchema>({
                     model: {
                         radius: new Attributes.Float({ value: 0, min: 0 }),
                         transform: {
@@ -49,18 +60,20 @@ export class Sphere extends Modules.Implementation<TSchema> {
                         }),
                     }),
                 },
-                outputs: (inputs) => {
+                outputs: ({ inputs }) => {
                     return {
                         output$: inputs.input$.pipe(
-                            map((message: TMessage) => {
-                                const { configuration } = message
+                            map((m: TMessage) => {
                                 const geometry = new SphereGeometry(
-                                    configuration.radius,
+                                    m.configuration.radius,
                                     10,
                                     10,
                                 )
                                 // should apply the transformation
-                                return new Mesh(geometry, message.data.material)
+                                return {
+                                    data: new Mesh(geometry, m.data.material),
+                                    context: m.context,
+                                }
                             }),
                         ),
                     }
