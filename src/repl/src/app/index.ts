@@ -1,6 +1,6 @@
 /*
- * Public API Surface of flux-lib-core
+ * Public API Surface
  */
 
 export * from './app.state'
-export * from './views'
+export * from './app.view'
