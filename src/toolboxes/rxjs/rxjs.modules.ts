@@ -1,14 +1,18 @@
-import { Modules } from '../../index'
-import { IOs, OutputMessage, ProcessingMessage } from '../../lib/modules'
-
 import { filter, map, mergeMap } from 'rxjs/operators'
 import { Observable, of } from 'rxjs'
-import { Configuration, Attributes } from '../../lib/modules/configurations'
-import { noContract } from '../../lib/modules/IOs/contract'
 import { Context } from '@youwol/logging'
+import {
+    IOs,
+    ProcessingMessage,
+    Configurations,
+    OutputMessage,
+} from '../../lib/modules'
+import { noContract } from '../../lib/modules/IOs/contract'
+import { Message } from '../../lib/connections'
+import { Modules } from '../../lib'
 
-type TSchema = {
-    function: Attributes.JsCode
+type TSchema<TArg, TReturn> = {
+    function: Configurations.Attributes.JsCode<(d: TArg) => TReturn>
 }
 type TExtractedConfig = {
     function: (...args) => unknown
@@ -19,13 +23,15 @@ const input$ = new IOs.Input({
     contract: noContract,
 })
 
-export class RxjsOf extends Modules.DefaultImplementation<TSchema> {
+type TSchemaOf = TSchema<void, unknown>
+
+export class RxjsOf extends Modules.DefaultImplementation<TSchemaOf> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configuration<TSchema>({
+                configurationModel: new Configurations.Configuration({
                     model: {
-                        function: new Attributes.JsCode({
+                        function: new Configurations.Attributes.JsCode({
                             value: () => ({ value: 42 }),
                         }),
                     },
@@ -45,24 +51,23 @@ export class RxjsOf extends Modules.DefaultImplementation<TSchema> {
                         }),
                     }
                 },
-                builderView: (_instance: Modules.Implementation<TSchema>) =>
-                    undefined,
+                builderView: () => undefined,
             },
             fwdParameters,
         )
     }
 }
 
-export class RxjsFilter extends Modules.DefaultImplementation<TSchema> {
+type TSchemaFilter = TSchema<Message, boolean>
+
+export class RxjsFilter extends Modules.DefaultImplementation<TSchemaFilter> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configuration<TSchema>({
+                configurationModel: new Configurations.Configuration({
                     model: {
-                        function: new Attributes.JsCode({
-                            value: ({ data }) => {
-                                return data != undefined
-                            },
+                        function: new Configurations.Attributes.JsCode({
+                            value: ({ data }) => data != undefined,
                         }),
                     },
                 }),
@@ -81,22 +86,22 @@ export class RxjsFilter extends Modules.DefaultImplementation<TSchema> {
                         ),
                     }
                 },
-                builderView: (_instance: Modules.Implementation<TSchema>) =>
-                    undefined,
+                builderView: () => undefined,
             },
             fwdParameters,
         )
     }
 }
 
-export class RxjsMap extends Modules.DefaultImplementation<TSchema> {
+type TSchemaMap = TSchema<Message, Message>
+export class RxjsMap extends Modules.DefaultImplementation<TSchemaMap> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configuration<TSchema>({
+                configurationModel: new Configurations.Configuration({
                     model: {
-                        function: new Attributes.JsCode({
-                            value: 'return ({data, context}) => { return {data, context} }',
+                        function: new Configurations.Attributes.JsCode({
+                            value: ({ data, context }) => ({ data, context }),
                         }),
                     },
                 }),
@@ -116,30 +121,22 @@ export class RxjsMap extends Modules.DefaultImplementation<TSchema> {
                         ),
                     }
                 },
-                builderView: (_instance: Modules.Implementation<TSchema>) =>
-                    undefined,
+                builderView: () => undefined,
             },
             fwdParameters,
         )
     }
 }
 
-/**
- * For this kind of module requiring an 'innerObservable' we should be able to use macro of the project, e.g.:
- * ```js
- * return ({data, context}}) => {
- *     return context.project.getMacro("macro_id")({input$:data}).output$
- * }
- * ```
- */
-export class RxjsMergeMap extends Modules.DefaultImplementation<TSchema> {
+type TSchemaMergeMap = TSchema<Message, Observable<Message>>
+export class RxjsMergeMap extends Modules.DefaultImplementation<TSchemaMergeMap> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configuration<TSchema>({
+                configurationModel: new Configurations.Configuration({
                     model: {
-                        function: new Attributes.JsCode({
-                            value: 'return ({data, context}) => { return of({data, context}) }',
+                        function: new Configurations.Attributes.JsCode({
+                            value: ({ data, context }) => of({ data, context }),
                         }),
                     },
                 }),
@@ -159,8 +156,7 @@ export class RxjsMergeMap extends Modules.DefaultImplementation<TSchema> {
                         ),
                     }
                 },
-                builderView: (_instance: Modules.Implementation<TSchema>) =>
-                    undefined,
+                builderView: () => undefined,
             },
             fwdParameters,
         )
