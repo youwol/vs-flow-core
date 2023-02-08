@@ -3,7 +3,7 @@ import * as IOs from './IOs'
 import { InstallInputs } from '@youwol/cdn-client'
 import { Observable } from 'rxjs'
 import { Schema } from './configurations'
-import { Connections } from '..'
+import { Connections, Modules } from '..'
 import { JsonMap } from '../connections'
 import {
     ConfigurableTrait,
@@ -97,13 +97,11 @@ export type ForwardArgs = {
     logsChannels?: LogChannel[]
 }
 
+type TDefaultImplementation<TSchema extends Schema> = Implementation<TSchema> &
+    RenderingTrait
+
 export class DefaultImplementation<TSchema extends Schema = Schema>
-    implements
-        ApiTrait,
-        ConfigurableTrait<TSchema>,
-        JournalTrait,
-        UidTrait,
-        RenderingTrait
+    implements TDefaultImplementation<TSchema>
 {
     public readonly uid: string = uuidv4()
     public readonly configurationModel: Configurations.Configuration<TSchema>
@@ -143,7 +141,7 @@ export class DefaultImplementation<TSchema extends Schema = Schema>
     }
 }
 
-export class Module<TImplementation extends Implementation> {
+export class Module<TImplementation extends Modules.Implementation> {
     public readonly declaration: Declaration
     public readonly implementation: ({
         fwdParams,
