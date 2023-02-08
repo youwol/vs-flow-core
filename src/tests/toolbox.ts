@@ -1,42 +1,16 @@
-import {
-    RxjsFilter,
-    RxjsMergeMap,
-    RxjsOf,
-} from './modules-implementation/rxjs.modules'
 import { setup } from '../auto-generated'
-import { Modules } from '..'
-import { ToolBox } from '../lib/environment'
 import { PlotModule } from './modules-implementation/plot.module'
+import { Implementation } from '../lib/modules'
+import { Modules, ToolBox } from '..'
+import { toolboxes } from '../toolboxes'
 
 type SphereModule = typeof import('./modules-implementation/sphere.module')
 
 const auxModuleSphere = 'test-sphere-module'
+
 export const toolbox = new ToolBox({
     modules: [
-        new Modules.Module({
-            declaration: {
-                typeId: 'of',
-            },
-            implementation: (fwdParams) => {
-                return Promise.resolve(new RxjsOf(fwdParams))
-            },
-        }),
-        new Modules.Module({
-            declaration: {
-                typeId: 'filter',
-            },
-            implementation: (fwdParams) => {
-                return Promise.resolve(new RxjsFilter(fwdParams))
-            },
-        }),
-        new Modules.Module({
-            declaration: {
-                typeId: 'mergeMap',
-            },
-            implementation: ({ fwdParams }) => {
-                return new RxjsMergeMap(fwdParams)
-            },
-        }),
+        ...toolboxes.rxjs.modules,
         new Modules.Module({
             declaration: {
                 typeId: 'sphere',
@@ -55,7 +29,7 @@ export const toolbox = new ToolBox({
                     window[
                         `${setup.name}/${auxModuleSphere}_API${setup.apiVersion}`
                     ]
-                return new SphereModule.Sphere(fwdParams)
+                return new SphereModule.Sphere(fwdParams) as Implementation
             },
         }),
         new Modules.Module({
