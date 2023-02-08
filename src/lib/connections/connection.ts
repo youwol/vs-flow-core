@@ -26,7 +26,7 @@ export type Message<TData = unknown> = {
 type Adaptor = (Message) => InputMessage
 
 type TSchema = {
-    adaptor: Configurations.Attributes.JsCode
+    adaptor: Configurations.Attributes.JsCode<(Message) => Message>
 }
 
 export class Connection

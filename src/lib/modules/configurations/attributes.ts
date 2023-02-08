@@ -1,60 +1,33 @@
-export type AnyFunction<A = any> = (...input: any[]) => A
-export type AnyConstructor<A = object> = new (...input: any[]) => A
-
-export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
-// This mixin adds a scale property, with getters and setters
-// for changing it with an encapsulated private property:
-
-function AttributeTrait<T, TBase extends AnyConstructor>(Base: TBase) {
-    return class AttributeTrait extends Base {
-        // Mixins may not declare private/protected properties
-        // however, you can use ES2020 private fields
-        __value: T
-        constructor(...rest) {
-            super(rest)
-        }
-
-        setValue(v: T) {
-            this.__value = v
-        }
-        getValue() {
-            return this.__value
-        }
-    }
+export interface AttributeTrait<TValue> {
+    __value: TValue
 }
-export type AttributeTrait<_T> = Mixin<typeof AttributeTrait>
 
-export class JsCode extends AttributeTrait<
-    (...args) => unknown,
-    AnyConstructor
->(Object) {
-    value: (...args) => unknown
+export class JsCode<TFct> implements AttributeTrait<TFct> {
+    public readonly __value: TFct
 
-    constructor(params: { value: string | ((...args) => unknown) }) {
-        super(params)
-        this.setValue(
+    constructor(params: { value: string | TFct }) {
+        this.__value =
             typeof params.value == 'string'
                 ? new Function(params.value)()
-                : params.value,
-        )
+                : params.value
     }
 }
 
-export class Float extends AttributeTrait<number, AnyConstructor>(Object) {
+export class Float implements AttributeTrait<number> {
+    public readonly __value: number
     public readonly min?: number
     public readonly max?: number
 
     constructor(params: { value: number; min?: number; max?: number }) {
-        super(params)
-        this.setValue(params.value)
         Object.assign(this, params)
+        this.__value = params.value
     }
 }
 
-export class String extends AttributeTrait<string, AnyConstructor>(Object) {
+export class String implements AttributeTrait<string> {
+    public readonly __value: string
     constructor(params: { value: string }) {
-        super(params)
-        this.setValue(params.value)
         Object.assign(this, params)
+        this.__value = params.value
     }
 }

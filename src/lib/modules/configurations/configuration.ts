@@ -7,10 +7,10 @@ export interface Schema {
     [k: string]: Schema | Schema[] | AttributeTrait<unknown>
 }
 
-export class Configuration<TSchema extends Schema> {
-    model: TSchema
+export class Configuration<T> {
+    model: T
 
-    constructor(params: { model: TSchema }) {
+    constructor(params: { model: T }) {
         Object.assign(this, params)
     }
 
@@ -22,7 +22,10 @@ export class Configuration<TSchema extends Schema> {
         context: Context
     }): JsonMap {
         return context.withChild('Attempt extractWith', (childContext) => {
-            const rawExtracted = parseObject(this.model, values || {})
+            const rawExtracted = parseObject(
+                this.model as unknown as Schema,
+                values || {},
+            )
             childContext.info('extracted', rawExtracted)
             return rawExtracted
         })
@@ -35,7 +38,7 @@ function parseObject<TSchema extends Schema>(model: TSchema, values) {
         if (asAttribute.__value != undefined) {
             return {
                 ...acc,
-                [k]: values && values[k] ? values[k] : asAttribute.getValue(),
+                [k]: values && values[k] ? values[k] : asAttribute.__value,
             }
         }
         return { ...acc, [k]: parseObject(v as Schema, values && values[k]) }
