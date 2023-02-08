@@ -1227,21 +1227,6 @@
   dependencies:
     rxjs "^6.5.5"
 
-"@youwol/http-clients@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@youwol/http-clients/-/http-clients-2.0.3.tgz#204fcc4072133449ad1489c645339a1b83fa9dbf"
-  integrity sha512-emXUk6JrTYCqy+7A36VBTIlHS3oTATCM4SoLVrZbD8KJ1DCri0cTqECSt7fwxfQOzgpQIWjWjsKl49rMztf7BA==
-  dependencies:
-    "@youwol/http-primitives" "^0.1.2"
-    rxjs "^6.5.5"
-
-"@youwol/http-primitives@^0.1.2":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@youwol/http-primitives/-/http-primitives-0.1.2.tgz#0ac9e0d660508157dd777fd6c8f83fc4bca9d540"
-  integrity sha512-wtSarBFx1qf/tOvcX9eAj3PsT4LEqI9IbD+mUf2xKvH4XKkrIUaAIdcIX9rg5eFKYVeQAi3RlTyTQyQz14/X+A==
-  dependencies:
-    rxjs "^6.5.5"
-
 "@youwol/jest-preset@0.0.2":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@youwol/jest-preset/-/jest-preset-0.0.2.tgz#0885d98037a1bff248b0caba70e4346b1ad8ef70"
