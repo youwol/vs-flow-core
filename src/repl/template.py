@@ -16,6 +16,7 @@ load_dependencies = {
     '@youwol/fv-tabs': '^0.2.1',
     '@youwol/os-top-banner': '^0.1.1',
     '@youwol/fv-code-mirror-editors': '^0.2.2',
+    '@youwol/fv-tree': '^0.2.3',
 }
 
 template = Template(

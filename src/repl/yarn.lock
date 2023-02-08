@@ -1255,6 +1255,14 @@
     "@youwol/flux-view" "^1.0.3"
     rxjs "^6.5.5"
 
+"@youwol/fv-tree@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@youwol/fv-tree/-/fv-tree-0.2.3.tgz#deb21ba4a9824d32abb914507087d1d4f35157d6"
+  integrity sha512-6BgLcOavufjl3VbonUW07I+gt/zEFZLaTfmMAxixFVCokK0vWb5h1skahskgPfkU4IuqEBQ6YPok6uoSaUExZQ==
+  dependencies:
+    "@youwol/flux-view" "^1.0.3"
+    rxjs "^6.5.5"
+
 "@youwol/http-clients@^2.0.1":
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/@youwol/http-clients/-/http-clients-2.0.3.tgz#204fcc4072133449ad1489c645339a1b83fa9dbf"
