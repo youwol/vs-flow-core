@@ -10,7 +10,7 @@ export function toolbox() {
                 declaration: {
                     typeId: 'of',
                 },
-                implementation: (fwdParams) => {
+                implementation: ({ fwdParams }) => {
                     return new RxjsOf(fwdParams)
                 },
             }),
@@ -18,7 +18,7 @@ export function toolbox() {
                 declaration: {
                     typeId: 'filter',
                 },
-                implementation: (fwdParams) => {
+                implementation: ({ fwdParams }) => {
                     return new RxjsFilter(fwdParams)
                 },
             }),
@@ -26,7 +26,7 @@ export function toolbox() {
                 declaration: {
                     typeId: 'map',
                 },
-                implementation: (fwdParams) => {
+                implementation: ({ fwdParams }) => {
                     return new RxjsMap(fwdParams)
                 },
             }),
