@@ -1,9 +1,10 @@
 import { Modules } from '..'
 import { setup } from '../auto-generated'
-import { IEnvironment, ToolBox } from '../lib/environment'
+import { IEnvironment, ToolBox } from '../lib'
 import * as SphereModule from './modules-implementation/sphere.module'
 import { Implementation } from '../lib/modules'
 import { JsonMap } from '../lib/connections'
+import { toolboxes } from '../toolboxes'
 
 export class TestEnvironment implements IEnvironment {
     public readonly toolboxes: ToolBox[]
@@ -14,6 +15,11 @@ export class TestEnvironment implements IEnvironment {
         const auxModuleSphere = 'test-sphere-module'
         window[`${setup.name}/${auxModuleSphere}_API${setup.apiVersion}`] =
             SphereModule
+    }
+
+    async import(toolbox: string) {
+        this.toolboxes.push(toolboxes[toolbox])
+        return Promise.resolve(toolboxes[toolbox])
     }
 
     async instantiateModule<T>({
