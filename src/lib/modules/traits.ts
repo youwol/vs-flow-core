@@ -110,7 +110,7 @@ export function moduleConnectors<TSchema extends Schema>(params: {
 }
 export interface ConfigurableTrait<TSchema extends Schema> {
     configurationModel: Configurations.Configuration<TSchema>
-    configuration: JsonMap
+    configuration: { [k: string]: unknown }
 }
 
 export class ExecutionJournal {

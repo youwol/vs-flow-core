@@ -18,7 +18,7 @@ export class Configuration<TSchema extends Schema> {
         values,
         context,
     }: {
-        values?: JsonMap
+        values?: { [_k: string]: unknown }
         context: Context
     }): JsonMap {
         return context.withChild('Attempt extractWith', (childContext) => {
