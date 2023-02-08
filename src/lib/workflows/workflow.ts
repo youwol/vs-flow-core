@@ -25,4 +25,8 @@ export class Workflow implements UidTrait {
     ) {
         Object.assign(this, params)
     }
+
+    getModule(uid: string): Modules.Implementation | undefined {
+        return this.modules.find((m) => m.uid == uid)
+    }
 }
