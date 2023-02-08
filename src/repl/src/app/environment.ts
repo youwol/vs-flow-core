@@ -1,4 +1,5 @@
 import { Modules, IEnvironment, ToolBox } from '../../../lib'
+import { toolboxes } from '../../../toolboxes'
 
 export class Environment implements IEnvironment {
     public toolboxes: ToolBox[]
@@ -7,6 +8,13 @@ export class Environment implements IEnvironment {
         Object.assign(this, params)
     }
 
+    async import(toolbox: string): Promise<ToolBox> {
+        /**
+         * for now only standard toolboxes are supported
+         */
+        this.toolboxes.push(toolboxes[toolbox])
+        return Promise.resolve(toolboxes[toolbox])
+    }
     async instantiateModule<T>({
         typeId,
         moduleId,
