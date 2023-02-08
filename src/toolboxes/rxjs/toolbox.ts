@@ -3,6 +3,8 @@ import { RxjsFilter, RxjsMap, RxjsMergeMap, RxjsOf } from './rxjs.modules'
 
 export function toolbox() {
     return new ToolBox({
+        name: 'rxjs',
+        uid: '@youwol/vs-flow-core/rxjs',
         modules: [
             new Modules.Module({
                 declaration: {

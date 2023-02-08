@@ -9,6 +9,8 @@ type SphereModule = typeof import('./modules-implementation/sphere.module')
 const auxModuleSphere = 'test-sphere-module'
 
 export const toolbox = new ToolBox({
+    name: 'test-toolbox',
+    uid: '@youwol/vs-flow-core/test-toolbox',
     modules: [
         ...toolboxes.rxjs.modules,
         new Modules.Module({
