@@ -93,7 +93,7 @@ export type UserArgs<TSchema extends Schema> = {
 
 export type ForwardArgs = {
     uid?: string
-    configuration?: JsonMap
+    configuration?: { [_k: string]: unknown }
     logsChannels?: LogChannel[]
 }
 

@@ -10,7 +10,6 @@ import { filter, map, tap } from 'rxjs/operators'
 import * as Configurations from './configurations'
 import { Schema } from './configurations'
 import { Context, Journal, LogChannel } from '@youwol/logging'
-import { JsonMap } from '../connections'
 
 export interface UidTrait {
     uid: string
@@ -25,7 +24,7 @@ export function moduleConnectors<TSchema extends Schema>(params: {
     inputs?: { [k: string]: IOs.Input }
     outputs?: TOutputGenerator
     defaultConfiguration: Configurations.Configuration<TSchema>
-    staticConfiguration: JsonMap
+    staticConfiguration: { [_k: string]: unknown }
     executionJournal: ExecutionJournal
     context: Context
 }): {
