@@ -57,8 +57,8 @@ test('repl modules with IO & adaptor', async () => {
     expect(repl.modules()[1]).toBeInstanceOf(Sphere)
     const connections = repl.connections()
     expect(connections).toHaveLength(1)
-    expect(connections[0].adaptor).toBeTruthy()
-    const r = connections[0].adaptor({ data: 5 })
+    expect(connections[0].configuration.adaptor).toBeTruthy()
+    const r = connections[0].adapt({ data: 5 })
     expect(r).toEqual({ data: 5, configuration: {} })
 })
 

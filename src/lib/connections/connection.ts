@@ -1,7 +1,14 @@
 import { Slot } from '../modules/IOs'
-import { ApiTrait, UidTrait } from '../modules/traits'
+import {
+    ApiTrait,
+    ConfigurableTrait,
+    ExecutionJournal,
+    JournalTrait,
+    UidTrait,
+} from '../modules/traits'
 import { map } from 'rxjs/operators'
-import { InputMessage } from '../modules'
+import { Configurations, InputMessage } from '../modules'
+import { Subscription } from 'rxjs'
 
 type AnyJson = boolean | number | string | null | JsonArray | JsonMap
 export interface JsonMap {
@@ -18,41 +25,89 @@ export type Message<TData = unknown> = {
 
 type Adaptor = (Message) => InputMessage
 
-export class Connection implements UidTrait {
+type TSchema = {
+    adaptor: Configurations.Attributes.JsCode
+}
+
+export class Connection
+    implements UidTrait, ConfigurableTrait<TSchema>, JournalTrait
+{
     public readonly start: Slot
     public readonly end: Slot
-    public readonly adaptor: Adaptor
 
     public readonly uid: string
 
-    constructor(params: { start: Slot; end: Slot; adaptor?: Adaptor }) {
-        Object.assign(this, params)
+    public readonly configurationModel =
+        new Configurations.Configuration<TSchema>({
+            model: {
+                adaptor: new Configurations.Attributes.JsCode({
+                    value: (d) => d,
+                }),
+            },
+        })
+
+    public readonly configuration: { adaptor?: Adaptor }
+    public readonly journal: ExecutionJournal
+
+    private subscription: Subscription
+
+    constructor({
+        start,
+        end,
+        configuration,
+    }: {
+        start: Slot
+        end: Slot
+        configuration: { adaptor?: Adaptor }
+    }) {
+        this.start = start
+        this.end = end
+        this.journal = new ExecutionJournal({
+            logsChannels: [],
+        })
+        this.configuration = this.configurationModel.extractWith({
+            values: configuration,
+            context: this.journal.addJournal({
+                title: 'constructor',
+            }),
+        })
+
         this.uid = `${this.start.slotId}@${this.start.moduleId}-${this.end.slotId}@${this.end.moduleId}`
     }
-}
 
-export function connect({
-    start,
-    end,
-    adaptor,
-}: {
-    start: { slotId: string; module: ApiTrait }
-    end: { slotId: string; module: ApiTrait }
-    adaptor?: Adaptor
-}) {
-    const startSlot = start.module.outputSlots.find(
-        (slot) => slot.slotId == start.slotId,
-    )
-    const endSlot = end.module.inputSlots.find(
-        (slot) => slot.slotId == end.slotId,
-    )
-    return startSlot.observable$
-        .pipe(
-            map((message: Message<unknown>) => {
-                return adaptor ? adaptor(message) : message
-            }),
+    connect({ apiFinder }: { apiFinder: (uid: string) => ApiTrait }) {
+        const startModule = apiFinder(this.start.moduleId)
+        const endModule = apiFinder(this.end.moduleId)
+        const startSlot = startModule.outputSlots.find(
+            (slot) => slot.slotId == this.start.slotId,
         )
-        .subscribe((adaptedMessage: InputMessage<unknown>) => {
-            endSlot.subject.next(adaptedMessage)
-        })
+        const endSlot = endModule.inputSlots.find(
+            (slot) => slot.slotId == this.end.slotId,
+        )
+        const adaptor = this.configuration.adaptor
+
+        this.subscription = startSlot.observable$
+            .pipe(
+                map((message: Message<unknown>) => {
+                    const ctx = this.journal.addJournal({
+                        title: 'data transiting',
+                    })
+                    ctx.info('Incoming message', message)
+                    const adapted = adaptor ? adaptor(message) : message
+                    ctx.info('Adapted message', adapted)
+                    return adapted
+                }),
+            )
+            .subscribe((adaptedMessage: InputMessage<unknown>) => {
+                endSlot.subject.next(adaptedMessage)
+            })
+    }
+
+    isConnected() {
+        return this.subscription != undefined
+    }
+
+    adapt(d: unknown) {
+        return this.configuration.adaptor(d)
+    }
 }

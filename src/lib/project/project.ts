@@ -1,9 +1,8 @@
 import { IEnvironment } from '../environment'
-import { connect, Connection } from '../connections'
+import { Connection } from '../connections'
 import { Workflow } from '../workflows'
 import { Modules } from '..'
 import { ApiTrait } from '../modules/traits'
-import { Subscription } from 'rxjs'
 import { InputMessage } from '../modules'
 
 export type Macro = Workflow & ApiTrait
@@ -28,15 +27,18 @@ export class ProjectState {
     public readonly main: Workflow
     public readonly macros: Macro[]
     public readonly environment: IEnvironment
-    public readonly subscriptionsStore: { [k: string]: Subscription } = {}
 
     constructor(params: {
         main: Workflow
         macros: Macro[]
-        subscriptions?: { [k: string]: Subscription }
         environment: IEnvironment
     }) {
         Object.assign(this, params)
+        this.main.connections
+            .filter((c) => !c.isConnected())
+            .forEach((c) => {
+                c.connect({ apiFinder: (uid) => this.main.getModule(uid) })
+            })
     }
 
     getObservable({ moduleId, slotId }: { moduleId: string; slotId: string }) {
@@ -66,7 +68,7 @@ export class ProjectState {
                                 moduleId: end.module.uid,
                                 slotId: end.input,
                             },
-                            adaptor: end.adaptor,
+                            configuration: { adaptor: end.adaptor },
                         })
                     })
                     return { modules, connections }
@@ -80,25 +82,7 @@ export class ProjectState {
                     },
                     { modules: [], connections: [] },
                 )
-        const subscriptions = connections.reduce((acc, connection) => {
-            const startModule = [...this.main.modules, ...modules].find(
-                (m) => m.uid == connection.start.moduleId,
-            )
-            const endModule = [...this.main.modules, ...modules].find(
-                (m) => m.uid == connection.end.moduleId,
-            )
-            return {
-                ...acc,
-                [connection.uid]: connect({
-                    start: {
-                        slotId: connection.start.slotId,
-                        module: startModule,
-                    },
-                    end: { slotId: connection.end.slotId, module: endModule },
-                    adaptor: connection.adaptor,
-                }),
-            }
-        }, {})
+
         return new ProjectState({
             main: new Workflow({
                 modules: [...this.main.modules, ...modules],
@@ -107,7 +91,6 @@ export class ProjectState {
             }),
             macros: this.macros,
             environment: this.environment,
-            subscriptions: { ...this.subscriptionsStore, ...subscriptions },
         })
     }
 }
