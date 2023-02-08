@@ -74,6 +74,13 @@ const secondaryEntries : {[k:string]:{entryFile: string, name: string, loadDepen
             "rxjs"
         ],
         "name": "test-sphere-module"
+    },
+    "rxjs": {
+        "entryFile": "./toolboxes/rxjs/index.ts",
+        "loadDependencies": [
+            "rxjs"
+        ],
+        "name": "rxjs"
     }
 }
 

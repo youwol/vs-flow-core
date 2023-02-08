@@ -46,6 +46,11 @@ template = Template(
                 name="test-sphere-module",
                 entryFile="./tests/modules-implementation/sphere.module.ts",
                 loadDependencies=['three', "rxjs"]
+            ),
+            AuxiliaryModule(
+                name="rxjs",
+                entryFile="./toolboxes/rxjs/index.ts",
+                loadDependencies=["rxjs"]
             )
         ]
     )
