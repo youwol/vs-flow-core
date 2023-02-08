@@ -43,12 +43,12 @@ export class ToolboxesView implements VirtualDOM {
         this.children = [
             child$(this.state.repl.environment.toolboxes$, (toolboxes) => {
                 const rootNode = createRootNode(toolboxes)
-                const state = new ImmutableTree.State<Node>({
+                const state = new ImmutableTree.State<NodeToolboxesBase>({
                     rootNode,
                 })
                 return new ImmutableTree.View({
                     state,
-                    headerView: (state, node: Node) => {
+                    headerView: (state, node: NodeToolboxesBase) => {
                         return new NodeView({ state, node })
                     },
                 })
@@ -57,12 +57,12 @@ export class ToolboxesView implements VirtualDOM {
     }
 }
 
-export type NodeCategory = 'Node' | 'Toolboxes' | 'Toolbox' | 'Module'
+export type NodeToolboxesCategory = 'Node' | 'Toolboxes' | 'Toolbox' | 'Module'
 
 /**
  * @category Nodes
  */
-export abstract class Node extends ImmutableTree.Node {
+export abstract class NodeToolboxesBase extends ImmutableTree.Node {
     /**
      * @group Immutable Constants
      */
@@ -71,7 +71,7 @@ export abstract class Node extends ImmutableTree.Node {
     /**
      * @group Immutable Constants
      */
-    public readonly category: NodeCategory = 'Node'
+    public readonly category: NodeToolboxesCategory = 'Node'
 
     protected constructor({
         id,
@@ -80,7 +80,7 @@ export abstract class Node extends ImmutableTree.Node {
     }: {
         id: string
         name: string
-        children?: Node[]
+        children?: NodeToolboxesBase[]
     }) {
         super({ id, children })
         this.name = name
@@ -90,11 +90,11 @@ export abstract class Node extends ImmutableTree.Node {
 /**
  * @category Nodes
  */
-export class ToolboxesNode extends Node {
+export class ToolboxesNode extends NodeToolboxesBase {
     /**
      * @group Immutable Constants
      */
-    public readonly category: NodeCategory = 'Toolboxes'
+    public readonly category: NodeToolboxesCategory = 'Toolboxes'
 
     constructor(params: { id: string; name: string; children }) {
         super({
@@ -109,11 +109,11 @@ export class ToolboxesNode extends Node {
 /**
  * @category Nodes
  */
-export class ToolboxNode extends Node {
+export class ToolboxNode extends NodeToolboxesBase {
     /**
      * @group Immutable Constants
      */
-    public readonly category: NodeCategory = 'Toolbox'
+    public readonly category: NodeToolboxesCategory = 'Toolbox'
 
     constructor(params: { id: string; name: string; children }) {
         super({
@@ -128,11 +128,11 @@ export class ToolboxNode extends Node {
 /**
  * @category Nodes
  */
-export class ModuleNode extends Node {
+export class ModuleNode extends NodeToolboxesBase {
     /**
      * @group Immutable Constants
      */
-    public readonly category: NodeCategory = 'Module'
+    public readonly category: NodeToolboxesCategory = 'Module'
 
     constructor(params: { id: string; name: string }) {
         super({
@@ -169,7 +169,7 @@ export class NodeView implements VirtualDOM {
     /**
      * @group Factories
      */
-    static NodeTypeFactory: Record<NodeCategory, string> = {
+    static NodeTypeFactory: Record<NodeToolboxesCategory, string> = {
         Node: '',
         Toolboxes: 'fas fa-shapes',
         Toolbox: 'fas fa-cubes',
@@ -179,7 +179,7 @@ export class NodeView implements VirtualDOM {
     /**
      * @group Immutable Constants
      */
-    public readonly node: Node
+    public readonly node: NodeToolboxesBase
 
     /**
      * @group Immutable DOM Constants
@@ -192,7 +192,10 @@ export class NodeView implements VirtualDOM {
      */
     public readonly children: VirtualDOM[]
 
-    constructor(params: { state: ImmutableTree.State<Node>; node: Node }) {
+    constructor(params: {
+        state: ImmutableTree.State<NodeToolboxesBase>
+        node: NodeToolboxesBase
+    }) {
         Object.assign(this, params)
         this.children = [
             { class: `${NodeView.NodeTypeFactory[this.node.category]} mx-1` },
