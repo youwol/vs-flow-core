@@ -22,4 +22,6 @@ export interface IEnvironment {
         moduleId?: string
         configuration?: JsonMap
     }): Promise<T & Modules.Implementation>
+
+    import(toolbox: string): Promise<ToolBox>
 }

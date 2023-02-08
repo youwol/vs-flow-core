@@ -17,6 +17,10 @@ export class Repl {
         })
     }
 
+    async import(fwdArgs) {
+        await this.environment.import(fwdArgs)
+    }
+
     modules() {
         return this.state.main.modules
     }
