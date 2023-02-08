@@ -2,6 +2,7 @@ import { Modules } from '.'
 import { Implementation } from './modules'
 import { UidTrait } from './modules/traits'
 import { JsonMap } from './connections'
+import { BehaviorSubject } from 'rxjs'
 
 export class ToolBox implements UidTrait {
     public readonly modules: Modules.Module<Implementation>[]
@@ -18,7 +19,7 @@ export class ToolBox implements UidTrait {
 }
 
 export interface IEnvironment {
-    toolboxes: ToolBox[]
+    toolboxes$: BehaviorSubject<ToolBox[]>
 
     instantiateModule<T>({
         typeId,

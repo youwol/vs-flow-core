@@ -1,8 +1,9 @@
 import { Modules, IEnvironment, ToolBox } from '../../../lib'
 import { toolboxes } from '../../../toolboxes'
+import { BehaviorSubject } from 'rxjs'
 
 export class Environment implements IEnvironment {
-    public toolboxes: ToolBox[]
+    public readonly toolboxes$ = new BehaviorSubject<ToolBox[]>([])
 
     constructor(params: { toolboxes: ToolBox[] }) {
         Object.assign(this, params)
@@ -12,9 +13,11 @@ export class Environment implements IEnvironment {
         /**
          * for now only standard toolboxes are supported
          */
-        this.toolboxes.push(toolboxes[toolbox])
+        const actualToolboxes = this.toolboxes$.value
+        this.toolboxes$.next([...actualToolboxes, toolboxes[toolbox]])
         return Promise.resolve(toolboxes[toolbox])
     }
+
     async instantiateModule<T>({
         typeId,
         moduleId,
@@ -24,11 +27,12 @@ export class Environment implements IEnvironment {
         moduleId?: string
         configuration?: { [_k: string]: unknown }
     }): Promise<T & Modules.Implementation> {
-        const module: Modules.Module<Modules.Implementation> = this.toolboxes
-            .reduce((acc, toolbox) => [...acc, ...toolbox.modules], [])
-            .find((module: Modules.Module<Modules.Implementation>) => {
-                return module.declaration.typeId == typeId
-            })
+        const module: Modules.Module<Modules.Implementation> =
+            this.toolboxes$.value
+                .reduce((acc, toolbox) => [...acc, ...toolbox.modules], [])
+                .find((module: Modules.Module<Modules.Implementation>) => {
+                    return module.declaration.typeId == typeId
+                })
         return (await module.getInstance({
             fwdParams: { uid: moduleId, configuration },
             environment: this,
