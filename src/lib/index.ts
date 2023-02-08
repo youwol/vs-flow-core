@@ -1,3 +1,5 @@
 export * as Modules from './modules'
 export * as Connections from './connections'
 export * as Workflows from './workflows'
+export * as Projects from './project'
+export * from './environment'
