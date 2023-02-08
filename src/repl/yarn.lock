@@ -1060,6 +1060,13 @@
     "@typescript-eslint/types" "5.51.0"
     eslint-visitor-keys "^3.3.0"
 
+"@typescript/vfs@^1.3.5":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@typescript/vfs/-/vfs-1.4.0.tgz#2d22985c7666c9d4ce26eb025405e6f156aa32b0"
+  integrity sha512-Pood7yv5YWMIX+yCHo176OnF8WUlKGImFG7XlsuH14Zb1YN5+dYD3uUtS7lqZtsH7tAveNUi2NzdpQCN0yRbaw==
+  dependencies:
+    debug "^4.1.1"
+
 "@webassemblyjs/ast@1.11.1":
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.11.1.tgz#2bfd767eae1a6996f432ff7e8d7fc75679c0b6a7"
@@ -1227,6 +1234,19 @@
   dependencies:
     rxjs "^6.5.5"
 
+"@youwol/fv-code-mirror-editors@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@youwol/fv-code-mirror-editors/-/fv-code-mirror-editors-0.2.2.tgz#9ea615475c4e5986aa6ec8279718a4c319af4cc7"
+  integrity sha512-Sn3z3PdI7yAu75/FilHFgkNnMD6oCV9DrQqygFWc2HI/LZ9Nz/nDqO0auJmvn09pDoaslP6hvpaauiwa1MQyKg==
+  dependencies:
+    "@typescript/vfs" "^1.3.5"
+    "@youwol/cdn-client" "^1.0.2"
+    "@youwol/flux-view" "^1.0.3"
+    "@youwol/logging" "^0.1.0"
+    codemirror "^5.52.0"
+    rxjs "^6.5.5"
+    typescript "^4.7.4"
+
 "@youwol/fv-tabs@^0.2.1":
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/@youwol/fv-tabs/-/fv-tabs-0.2.1.tgz#179efcd5d3645aac1f02c01b8202c407814e2a2d"
@@ -1254,6 +1274,11 @@
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@youwol/jest-preset/-/jest-preset-0.0.2.tgz#0885d98037a1bff248b0caba70e4346b1ad8ef70"
   integrity sha512-L9e9XzNkv5BXwrn4BGcc8VnFRBJnj6S2lXSbwEhSVETit5n5mAPA9bDsngG+o40nk4rnd7Xe4NqgXv3Y9kpb6w==
+
+"@youwol/logging@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@youwol/logging/-/logging-0.1.0.tgz#c5610afdc67ca1e86847ea6e6014574dfd2bee75"
+  integrity sha512-qmajvnb3x4Ad8VkmYbW+UCLn39y0NwOkg7AQPnp6YSUGcAeuJq2Ut11ZNX3tJZJXpYYR8d4IMIq/p5rcsa39BA==
 
 "@youwol/os-core@^0.1.1":
   version "0.1.6"
@@ -1815,6 +1840,11 @@ co@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/co/-/co-4.6.0.tgz#6ea6bdf3d853ae54ccb8e47bfa0bf3f9031fb184"
   integrity sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==
+
+codemirror@^5.52.0:
+  version "5.65.11"
+  resolved "https://registry.yarnpkg.com/codemirror/-/codemirror-5.65.11.tgz#c818edc3274788c008f636520c5490a1f7009b4f"
+  integrity sha512-Gp62g2eKSCHYt10axmGhKq3WoJSvVpvhXmowNq7pZdRVowwtvBR/hi2LSP5srtctKkRT33T6/n8Kv1UGp7JW4A==
 
 collect-v8-coverage@^1.0.0:
   version "1.0.1"

@@ -5,7 +5,8 @@ const runTimeDependencies = {
         "@youwol/flux-view": "^1.0.3",
         "@youwol/cdn-client": "^1.0.2",
         "@youwol/fv-tabs": "^0.2.1",
-        "@youwol/os-top-banner": "^0.1.1"
+        "@youwol/os-top-banner": "^0.1.1",
+        "@youwol/fv-code-mirror-editors": "^0.2.2"
     },
     "includedInBundle": {}
 }
@@ -14,7 +15,8 @@ const externals = {
     "@youwol/flux-view": "window['@youwol/flux-view_APIv1']",
     "@youwol/cdn-client": "window['@youwol/cdn-client_APIv1']",
     "@youwol/fv-tabs": "window['@youwol/fv-tabs_APIv02']",
-    "@youwol/os-top-banner": "window['@youwol/os-top-banner_APIv01']"
+    "@youwol/os-top-banner": "window['@youwol/os-top-banner_APIv01']",
+    "@youwol/fv-code-mirror-editors": "window['@youwol/fv-code-mirror-editors_APIv02']"
 }
 const exportedSymbols = {
     "rxjs": {
@@ -36,6 +38,10 @@ const exportedSymbols = {
     "@youwol/os-top-banner": {
         "apiKey": "01",
         "exportedSymbol": "@youwol/os-top-banner"
+    },
+    "@youwol/fv-code-mirror-editors": {
+        "apiKey": "02",
+        "exportedSymbol": "@youwol/fv-code-mirror-editors"
     }
 }
 
@@ -46,7 +52,8 @@ const mainEntry : {entryFile: string,loadDependencies:string[]} = {
         "@youwol/flux-view",
         "@youwol/cdn-client",
         "@youwol/fv-tabs",
-        "@youwol/os-top-banner"
+        "@youwol/os-top-banner",
+        "@youwol/fv-code-mirror-editors"
     ]
 }
 
