@@ -35,7 +35,7 @@ export class AppState {
             disposition: 'left',
             viewState$: new BehaviorSubject<DockableTabs.DisplayMode>('pined'),
             tabs$: new BehaviorSubject([
-                new ProjectTab(),
+                new ProjectTab({ state: this }),
                 new ToolboxesTab({ state: this }),
             ]),
             selected$: new BehaviorSubject<string>('Project'),
