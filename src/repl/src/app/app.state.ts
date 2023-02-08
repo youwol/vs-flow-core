@@ -2,7 +2,7 @@ import { Projects } from '../../../lib'
 import { Environment } from './environment'
 import { DockableTabs } from '@youwol/fv-tabs'
 import { BehaviorSubject } from 'rxjs'
-import { ProjectTab, ReplTab } from './side-nav-tabs'
+import { ProjectTab, ReplTab, ToolboxesTab } from './side-nav-tabs'
 /**
  * @category State
  * @category Entry Point
@@ -33,10 +33,11 @@ export class AppState {
         })
         this.leftSideNavState = new DockableTabs.State({
             disposition: 'left',
-            viewState$: new BehaviorSubject<DockableTabs.DisplayMode>(
-                'collapsed',
-            ),
-            tabs$: new BehaviorSubject([new ProjectTab()]),
+            viewState$: new BehaviorSubject<DockableTabs.DisplayMode>('pined'),
+            tabs$: new BehaviorSubject([
+                new ProjectTab(),
+                new ToolboxesTab({ state: this }),
+            ]),
             selected$: new BehaviorSubject<string>('Project'),
         })
     }
