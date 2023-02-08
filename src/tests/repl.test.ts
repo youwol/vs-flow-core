@@ -1,8 +1,18 @@
-import { Repl } from '../lib/project/repl'
+import { Repl } from '../lib/project'
 import { TestEnvironment } from './environment'
 import { toolbox } from './toolbox'
-import { RxjsFilter } from './modules-implementation/rxjs.modules'
 import { Sphere } from './modules-implementation/sphere.module'
+import { RxjsFilter } from '../toolboxes/rxjs'
+
+test('repl import', async () => {
+    const repl = new Repl({
+        environment: new TestEnvironment({ toolboxes: [] }),
+    })
+    await repl.import('rxjs')
+    await repl.__(['filter'])
+    expect(repl.modules()).toHaveLength(1)
+    expect(repl.modules()[0]).toBeInstanceOf(RxjsFilter)
+})
 
 test('repl one module', async () => {
     const repl = new Repl({
