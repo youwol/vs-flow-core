@@ -1,4 +1,4 @@
-import { Repl } from '../lib/project/repl'
+import { Repl } from '../lib/project'
 import { TestEnvironment } from './environment'
 import { toolbox } from './toolbox'
 import { mergeMap } from 'rxjs/operators'
@@ -18,8 +18,8 @@ test('execution', (done) => {
         },
     })
         .pipe(
-            mergeMap((repl) => {
-                return repl.state.getObservable({
+            mergeMap(({ project }) => {
+                return project.getObservable({
                     moduleId: 's0',
                     slotId: 'output$',
                 })

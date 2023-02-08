@@ -2,31 +2,24 @@ import { FlowNode, ProjectState } from './project'
 import { Workflow } from '../workflows'
 import { IEnvironment } from '../environment'
 import { Implementation, InputMessage } from '../modules'
-import { from, Observable } from 'rxjs'
+import { BehaviorSubject, from, Observable } from 'rxjs'
 
 export class Repl {
     public readonly environment: IEnvironment
-    public state: ProjectState
+    public project$: BehaviorSubject<ProjectState>
 
     constructor(params: { environment: IEnvironment }) {
         Object.assign(this, params)
-        this.state = new ProjectState({
+        const project = new ProjectState({
             main: new Workflow(),
             macros: [],
             environment: this.environment,
         })
+        this.project$ = new BehaviorSubject(project)
     }
 
     async import(fwdArgs) {
         await this.environment.import(fwdArgs)
-    }
-
-    modules() {
-        return this.state.main.modules
-    }
-
-    connections() {
-        return this.state.main.connections
     }
 
     async __(
@@ -35,12 +28,13 @@ export class Repl {
             adaptors?: { [k: string]: ({ data, context }) => InputMessage }
         } = {},
     ) {
+        const project = this.project$.value
         const sanitizedFlows: string[][] =
             Array.isArray(flows) && !Array.isArray(flows[0])
                 ? ([flows] as string[][])
                 : (flows as string[][])
         const branches = []
-        const modules = [...this.state.main.modules]
+        const modules = [...project.main.modules]
         for (const flow of sanitizedFlows) {
             const promises = flow.map((elem, i): Promise<FlowNode> => {
                 return parseElement(
@@ -54,8 +48,9 @@ export class Repl {
             const branch = await Promise.all(promises)
             branches.push(branch)
         }
-        this.state = this.state.addFlows(branches)
-        return this
+        const newProject = project.addFlows(branches)
+        this.project$.next(newProject)
+        return { project: newProject }
     }
 
     __$(
@@ -63,7 +58,7 @@ export class Repl {
         options: {
             adaptors?: { [k: string]: ({ data, context }) => InputMessage }
         } = {},
-    ): Observable<Repl> {
+    ): Observable<{ project: ProjectState }> {
         return from(this.__(flows, options))
     }
 }
