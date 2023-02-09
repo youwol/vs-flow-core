@@ -119,12 +119,16 @@ export class DefaultImplementation<TSchema extends Schema = Schema>
         Object.assign(this, params, fwdParameters)
 
         this.uid = this.uid || uuidv4()
-
         this.journal = new ExecutionJournal({
             logsChannels: fwdParameters.logsChannels || [],
         })
         const constructorContext = this.journal.addJournal({
             title: 'constructor',
+        })
+
+        this.configuration = this.configurationModel.extractWith({
+            values: fwdParameters.configuration,
+            context: constructorContext,
         })
 
         const { inputSlots, outputSlots } = moduleConnectors({
