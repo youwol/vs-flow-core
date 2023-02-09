@@ -31,3 +31,11 @@ export class String implements AttributeTrait<string> {
         this.__value = params.value && params.value
     }
 }
+
+export class Integer implements AttributeTrait<number> {
+    public readonly __value: number
+    constructor(params: { value: number; min?: number; max?: number }) {
+        Object.assign(this, params)
+        this.__value = params.value && params.value
+    }
+}
