@@ -177,7 +177,7 @@ function createRootNode(project: ProjectState) {
                 name: 'main',
                 children: project.main.modules.map((module) => {
                     return new ModuleInstance({
-                        name: module.uid,
+                        name: module.configuration['name'] as string,
                         id: module.uid,
                     })
                 }),
