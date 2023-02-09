@@ -26,6 +26,7 @@ export class Repl {
         flows: string[] | string[][],
         options: {
             adaptors?: { [k: string]: ({ data, context }) => InputMessage }
+            configurations?: { [k: string]: unknown }
         } = {},
     ) {
         const project = this.project$.value
@@ -57,6 +58,7 @@ export class Repl {
         flows: string[] | string[][],
         options: {
             adaptors?: { [k: string]: ({ data, context }) => InputMessage }
+            configurations?: { [k: string]: unknown }
         } = {},
     ): Observable<{ project: ProjectState }> {
         return from(this.__(flows, options))
@@ -70,6 +72,7 @@ async function parseElement(
     environment: IEnvironment,
     options: {
         adaptors?: { [k: string]: ({ data, context }) => InputMessage }
+        configurations?: { [k: string]: unknown }
     },
 ): Promise<FlowNode> {
     /**
@@ -137,7 +140,10 @@ async function parseElement(
     const type = module.split(outer)[0]
     const args = arg.split(',')
     if (args[0].includes('{')) {
-        conf = JSON.parse(args[0])
+        const result = /{(.*?)}/.exec(module)
+        conf = result[1].includes('@')
+            ? options.configurations[result[1]]
+            : JSON.parse(args[0])
     } else {
         moduleId = args[0]
     }
