@@ -1,5 +1,11 @@
 import { Modules, ToolBox } from '../../lib'
-import { RxjsFilter, RxjsMap, RxjsMergeMap, RxjsOf } from './rxjs.modules'
+import {
+    RxjsFilter,
+    RxjsMap,
+    RxjsMergeMap,
+    RxjsOf,
+    RxjsTimer,
+} from './rxjs.modules'
 
 export function toolbox() {
     return new ToolBox({
@@ -36,6 +42,14 @@ export function toolbox() {
                 },
                 implementation: ({ fwdParams }) => {
                     return new RxjsMergeMap(fwdParams)
+                },
+            }),
+            new Modules.Module({
+                declaration: {
+                    typeId: 'timer',
+                },
+                implementation: ({ fwdParams }) => {
+                    return new RxjsTimer(fwdParams)
                 },
             }),
         ],

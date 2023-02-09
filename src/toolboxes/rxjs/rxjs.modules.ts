@@ -1,5 +1,5 @@
 import { filter, map, mergeMap } from 'rxjs/operators'
-import { Observable, of } from 'rxjs'
+import { Observable, of, timer } from 'rxjs'
 import { Context } from '@youwol/logging'
 import {
     IOs,
@@ -166,6 +166,55 @@ export class RxjsMergeMap extends Modules.DefaultImplementation<TSchemaMergeMap>
                                         context: p.context,
                                     }) as Observable<OutputMessage>,
                             ),
+                        ),
+                    }
+                },
+                builderView: () => undefined,
+            },
+            fwdParameters,
+        )
+    }
+}
+
+type TSchemaTimer = {
+    name: Configurations.Attributes.String
+    delay: Configurations.Attributes.Integer
+    period: Configurations.Attributes.Integer
+}
+
+export class RxjsTimer extends Modules.DefaultImplementation<TSchemaTimer> {
+    constructor(fwdParameters) {
+        super(
+            {
+                configurationModel: new Configurations.Configuration({
+                    model: {
+                        name: new Configurations.Attributes.String({
+                            value: 'Timer',
+                        }),
+                        delay: new Configurations.Attributes.Integer({
+                            value: 0,
+                        }),
+                        period: new Configurations.Attributes.Integer({
+                            value: 1000,
+                        }),
+                    },
+                }),
+                inputs: {
+                    input$,
+                },
+                outputs: ({ configuration, context }) => {
+                    return {
+                        output$: timer(
+                            configuration.delay,
+                            configuration.period,
+                        ).pipe(
+                            map((c) => {
+                                return {
+                                    data: c,
+                                    context,
+                                    configuration: {} as TExtractedConfig,
+                                }
+                            }),
                         ),
                     }
                 },
