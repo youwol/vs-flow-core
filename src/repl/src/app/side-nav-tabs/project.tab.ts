@@ -3,6 +3,7 @@ import { child$, VirtualDOM } from '@youwol/flux-view'
 import { AppState } from '../app.state'
 import { ImmutableTree } from '@youwol/fv-tree'
 import { ProjectState } from '../../../../lib/project'
+import { distinctUntilChanged } from 'rxjs/operators'
 
 /**
  * @category View
@@ -46,6 +47,15 @@ export class ProjectView implements VirtualDOM {
                 const state = new ImmutableTree.State<NodeProjectBase>({
                     rootNode,
                 })
+                state.selectedNode$.subscribe((node) => {
+                    node instanceof ModuleInstance &&
+                        this.state.selectedUid$.next(node.id)
+                })
+                this.state.selectedUid$
+                    .pipe(distinctUntilChanged())
+                    .subscribe((uid) => {
+                        state.selectedNode$.next(state.getNode(uid))
+                    })
                 return new ImmutableTree.View({
                     state,
                     headerView: (state, node: NodeProjectBase) => {

@@ -1,7 +1,7 @@
 import { Projects } from '../../../lib'
 import { Environment } from './environment'
 import { DockableTabs } from '@youwol/fv-tabs'
-import { BehaviorSubject } from 'rxjs'
+import { BehaviorSubject, ReplaySubject } from 'rxjs'
 import { ProjectTab, ReplTab, ToolboxesTab } from './side-nav-tabs'
 /**
  * @category State
@@ -18,6 +18,11 @@ export class AppState {
      * @group States
      */
     public readonly leftSideNavState: DockableTabs.State
+
+    /**
+     * @group Observable
+     */
+    public readonly selectedUid$ = new ReplaySubject<string>(1)
 
     constructor(params = {}) {
         Object.assign(this, params)

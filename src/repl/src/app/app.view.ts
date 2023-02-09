@@ -3,7 +3,6 @@ import { AppState } from './app.state'
 import { TopBannerView } from './top-banner'
 import { DockableTabs } from '@youwol/fv-tabs'
 import { Renderer3DView } from '../../../vs-flow-viewer/src'
-import { ReplaySubject } from 'rxjs'
 /**
  * @category View
  * @Category Entry Point
@@ -96,9 +95,7 @@ export class MainContentView implements VirtualDOM {
                                 (project) =>
                                     new Renderer3DView({
                                         project: project,
-                                        uidSelected: new ReplaySubject<string>(
-                                            1,
-                                        ),
+                                        uidSelected: this.state.selectedUid$,
                                     }),
                             ),
                         ],
