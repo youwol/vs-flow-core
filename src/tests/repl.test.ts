@@ -147,6 +147,25 @@ test('repl modules with config 2', async () => {
     })
 })
 
+test('repl modules with config 3', async () => {
+    const repl = new Repl({
+        environment: new TestEnvironment({ toolboxes: [toolbox] }),
+    })
+    expect(repl).toBeTruthy()
+    const { project } = await repl.__(['sphere({@c})'], {
+        configurations: {
+            '@c': { transform: { translation: { x: 4 } } },
+        },
+    })
+    const modules = project.main.modules
+    expect(modules).toHaveLength(1)
+    expect(modules[0].configuration).toEqual({
+        name: 'Sphere',
+        radius: 0,
+        transform: { translation: { x: 4, y: 0, z: 0 } },
+    })
+})
+
 test('repl misc 0', async () => {
     const repl = new Repl({
         environment: new TestEnvironment({ toolboxes: [toolbox] }),

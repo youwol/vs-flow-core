@@ -6,7 +6,8 @@ import { map } from 'rxjs/operators'
 
 type Transform = {
     translation: {
-        x: Attributes.Float
+        // integer for testing
+        x: Attributes.Integer
         y: Attributes.Float
         z: Attributes.Float
     }
@@ -41,7 +42,7 @@ export class Sphere extends Modules.DefaultImplementation<TSchema> {
                         radius: new Attributes.Float({ value: 0, min: 0 }),
                         transform: {
                             translation: {
-                                x: new Attributes.Float({ value: 0 }),
+                                x: new Attributes.Integer({ value: 0 }),
                                 y: new Attributes.Float({ value: 0 }),
                                 z: new Attributes.Float({ value: 0 }),
                             },
