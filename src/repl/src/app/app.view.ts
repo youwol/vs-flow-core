@@ -1,7 +1,8 @@
-import { VirtualDOM } from '@youwol/flux-view'
+import { child$, VirtualDOM } from '@youwol/flux-view'
 import { AppState } from './app.state'
 import { TopBannerView } from './top-banner'
 import { DockableTabs } from '@youwol/fv-tabs'
+import { Viewer3DView } from './builder-view/viewer3D.view'
 
 /**
  * @category View
@@ -89,7 +90,16 @@ export class MainContentView implements VirtualDOM {
                         style: {
                             minHeight: '0px',
                         },
-                        innerText: 'View Content',
+                        children: [
+                            child$(
+                                this.state.repl.project$,
+                                (project) =>
+                                    new Viewer3DView({
+                                        state: this.state,
+                                        project,
+                                    }),
+                            ),
+                        ],
                     },
                     bottomSideNavView,
                 ],
