@@ -4,7 +4,6 @@ import { TopBannerView } from './top-banner'
 import { DockableTabs } from '@youwol/fv-tabs'
 import { Renderer3DView } from '../../../vs-flow-viewer/src'
 import { ReplaySubject } from 'rxjs'
-import { Implementation } from '../../../lib/modules'
 /**
  * @category View
  * @Category Entry Point
@@ -97,10 +96,9 @@ export class MainContentView implements VirtualDOM {
                                 (project) =>
                                     new Renderer3DView({
                                         project: project,
-                                        moduleSelected$:
-                                            new ReplaySubject<Implementation>(
-                                                1,
-                                            ),
+                                        uidSelected: new ReplaySubject<string>(
+                                            1,
+                                        ),
                                     }),
                             ),
                         ],

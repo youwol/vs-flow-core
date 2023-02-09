@@ -4,7 +4,6 @@ import { Vector3 } from 'three'
 import { renderDag } from './dag'
 import { ProjectState } from '../../../lib/project'
 import { Environment3D, SelectableMesh } from './environment3d'
-import { Implementation } from '../../../lib/modules'
 import { ReplaySubject } from 'rxjs'
 
 export class Renderer3DView {
@@ -20,7 +19,7 @@ export class Renderer3DView {
 
     constructor(params: {
         project: ProjectState
-        moduleSelected$: ReplaySubject<Implementation>
+        uidSelected: ReplaySubject<string>
     }) {
         Object.assign(this, params)
 
@@ -35,7 +34,7 @@ export class Renderer3DView {
                         htmlElementContainer: htmlElement,
                         project: this.project,
                         positions: this.positions,
-                        moduleSelected$: params.moduleSelected$,
+                        uidSelected$: params.uidSelected,
                     })
                     animate(this.environment3D)
                 },

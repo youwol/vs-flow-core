@@ -15,18 +15,18 @@ export class ModuleObject3d extends Mesh implements SelectableTrait {
 
     public readonly sphere: Mesh
     public readonly sphereMaterial: MeshStandardMaterial
-    public readonly moduleSelected$: ReplaySubject<Implementation>
+    public readonly uidSelected$: ReplaySubject<string>
 
     public selected = false
     constructor(params: {
         module: Implementation
         positions: { [k: string]: Vector3 }
-        moduleSelected$: ReplaySubject<Implementation>
+        uidSelected$: ReplaySubject<string>
     }) {
         super()
         Object.assign(this, params)
-        this.moduleSelected$.subscribe((mdle) => {
-            if (mdle != this.module) {
+        this.uidSelected$.subscribe((uid) => {
+            if (uid != this.module.uid) {
                 this.selected = false
                 this.onRestored()
                 return

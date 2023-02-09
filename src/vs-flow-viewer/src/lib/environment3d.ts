@@ -21,7 +21,6 @@ import { ConnectionObject3d } from './objects3d/connection.object3d'
 import { fitSceneToContent, getBoundingBox } from './utils'
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls'
 import { ReplaySubject } from 'rxjs'
-import { Implementation } from '../../../lib/modules'
 
 export type SelectableMesh = Mesh & {
     userData: { selectableTrait: SelectableTrait }
@@ -45,12 +44,12 @@ export class Environment3D {
     public readonly selectables: SelectableMesh[]
 
     public hovered: SelectableMesh
-    public readonly moduleSelected$: ReplaySubject<Implementation>
+    public readonly uidSelected$: ReplaySubject<string>
     constructor(params: {
         htmlElementContainer: HTMLDivElement
         project: ProjectState
         positions: { [_k: string]: Vector3 }
-        moduleSelected$: ReplaySubject<Implementation>
+        uidSelected$: ReplaySubject<string>
     }) {
         Object.assign(this, params)
 
@@ -95,11 +94,11 @@ export class Environment3D {
         }
         this.htmlElementContainer.onclick = () => {
             if (this.hovered) {
-                this.moduleSelected$.next(
-                    this.hovered.userData.selectableTrait.getEntity(),
+                this.uidSelected$.next(
+                    this.hovered.userData.selectableTrait.getEntity().uid,
                 )
             } else {
-                this.moduleSelected$.next(undefined)
+                this.uidSelected$.next(undefined)
             }
         }
 
@@ -108,7 +107,7 @@ export class Environment3D {
                 new ModuleObject3d({
                     module,
                     positions: this.positions,
-                    moduleSelected$: params.moduleSelected$,
+                    uidSelected$: params.uidSelected$,
                 }),
         )
         const connections = this.project.main.connections.map(
