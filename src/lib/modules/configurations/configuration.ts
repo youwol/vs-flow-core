@@ -4,7 +4,12 @@ import { Context } from '@youwol/logging'
 export * as Attributes from './attributes'
 
 export interface Schema {
-    [k: string]: Schema | Schema[] | AttributeTrait<unknown>
+    name: Attributes.String
+    [k: string]: SchemaInner | SchemaInner[] | AttributeTrait<unknown>
+}
+
+export interface SchemaInner {
+    [k: string]: SchemaInner | SchemaInner[] | AttributeTrait<unknown>
 }
 
 export class Configuration<T> {
