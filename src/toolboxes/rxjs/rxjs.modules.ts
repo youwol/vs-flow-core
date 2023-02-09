@@ -12,6 +12,7 @@ import { Message } from '../../lib/connections'
 import { Modules } from '../../lib'
 
 type TSchema<TArg, TReturn> = {
+    name: Configurations.Attributes.String
     function: Configurations.Attributes.JsCode<(d: TArg) => TReturn>
 }
 type TExtractedConfig = {
@@ -31,6 +32,9 @@ export class RxjsOf extends Modules.DefaultImplementation<TSchemaOf> {
             {
                 configurationModel: new Configurations.Configuration({
                     model: {
+                        name: new Configurations.Attributes.String({
+                            value: 'Of',
+                        }),
                         function: new Configurations.Attributes.JsCode({
                             value: () => ({ value: 42 }),
                         }),
@@ -66,6 +70,9 @@ export class RxjsFilter extends Modules.DefaultImplementation<TSchemaFilter> {
             {
                 configurationModel: new Configurations.Configuration({
                     model: {
+                        name: new Configurations.Attributes.String({
+                            value: 'Filter',
+                        }),
                         function: new Configurations.Attributes.JsCode({
                             value: ({ data }) => data != undefined,
                         }),
@@ -100,6 +107,9 @@ export class RxjsMap extends Modules.DefaultImplementation<TSchemaMap> {
             {
                 configurationModel: new Configurations.Configuration({
                     model: {
+                        name: new Configurations.Attributes.String({
+                            value: 'Map',
+                        }),
                         function: new Configurations.Attributes.JsCode({
                             value: ({ data, context }) => ({ data, context }),
                         }),
@@ -135,6 +145,9 @@ export class RxjsMergeMap extends Modules.DefaultImplementation<TSchemaMergeMap>
             {
                 configurationModel: new Configurations.Configuration({
                     model: {
+                        name: new Configurations.Attributes.String({
+                            value: 'MergeMap',
+                        }),
                         function: new Configurations.Attributes.JsCode({
                             value: ({ data, context }) => of({ data, context }),
                         }),
