@@ -7,9 +7,13 @@ const runTimeDependencies = {
         "@youwol/fv-tabs": "^0.2.1",
         "@youwol/os-top-banner": "^0.1.1",
         "@youwol/fv-code-mirror-editors": "^0.2.2",
-        "@youwol/fv-tree": "^0.2.3"
+        "@youwol/fv-tree": "^0.2.3",
+        "three-trackballcontrols": "^0.0.8",
+        "three": "^0.128.0"
     },
-    "includedInBundle": {}
+    "includedInBundle": {
+        "d3-dag": "0.8.2"
+    }
 }
 const externals = {
     "rxjs": "window['rxjs_APIv6']",
@@ -18,7 +22,10 @@ const externals = {
     "@youwol/fv-tabs": "window['@youwol/fv-tabs_APIv02']",
     "@youwol/os-top-banner": "window['@youwol/os-top-banner_APIv01']",
     "@youwol/fv-code-mirror-editors": "window['@youwol/fv-code-mirror-editors_APIv02']",
-    "@youwol/fv-tree": "window['@youwol/fv-tree_APIv02']"
+    "@youwol/fv-tree": "window['@youwol/fv-tree_APIv02']",
+    "three-trackballcontrols": "window['TrackballControls_APIv008']",
+    "three": "window['THREE_APIv0128']",
+    "rxjs/operators": "window['rxjs_APIv6']['operators']"
 }
 const exportedSymbols = {
     "rxjs": {
@@ -48,6 +55,14 @@ const exportedSymbols = {
     "@youwol/fv-tree": {
         "apiKey": "02",
         "exportedSymbol": "@youwol/fv-tree"
+    },
+    "three-trackballcontrols": {
+        "apiKey": "008",
+        "exportedSymbol": "TrackballControls"
+    },
+    "three": {
+        "apiKey": "0128",
+        "exportedSymbol": "THREE"
     }
 }
 
@@ -60,7 +75,9 @@ const mainEntry : {entryFile: string,loadDependencies:string[]} = {
         "@youwol/fv-tabs",
         "@youwol/os-top-banner",
         "@youwol/fv-code-mirror-editors",
-        "@youwol/fv-tree"
+        "@youwol/fv-tree",
+        "three-trackballcontrols",
+        "three"
     ]
 }
 

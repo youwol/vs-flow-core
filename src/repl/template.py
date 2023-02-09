@@ -17,6 +17,8 @@ load_dependencies = {
     '@youwol/os-top-banner': '^0.1.1',
     '@youwol/fv-code-mirror-editors': '^0.2.2',
     '@youwol/fv-tree': '^0.2.3',
+    "three-trackballcontrols": "^0.0.8",
+    "three": '^0.128.0'
 }
 
 template = Template(
@@ -28,7 +30,10 @@ template = Template(
     author=pkg_json['author'],
     dependencies=Dependencies(
         runTime=RunTimeDeps(
-            externals=load_dependencies
+            externals=load_dependencies,
+            includedInBundle={
+                "d3-dag": "0.8.2"
+            }
         )
     ),
     userGuide=True,
