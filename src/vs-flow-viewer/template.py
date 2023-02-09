@@ -25,8 +25,14 @@ template = Template(
     author=pkg_json['author'],
     dependencies=Dependencies(
         runTime=RunTimeDeps(
-            externals=load_dependencies
-        )
+            externals=load_dependencies,
+            includedInBundle={
+                "d3-dag": "0.8.2"
+            }
+        ),
+        devTime={
+            "@types/three": "^0.128.0"
+        }
     ),
     bundles=Bundles(
           mainModule=MainModule(

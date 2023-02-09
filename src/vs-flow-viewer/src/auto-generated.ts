@@ -6,7 +6,9 @@ const runTimeDependencies = {
         "three-trackballcontrols": "^0.0.8",
         "three": "^0.128.0"
     },
-    "includedInBundle": {}
+    "includedInBundle": {
+        "d3-dag": "0.8.2"
+    }
 }
 const externals = {
     "@youwol/flux-view": {
