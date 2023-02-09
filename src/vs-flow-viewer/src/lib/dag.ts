@@ -5,7 +5,8 @@ import {
     layeringLongestPath,
     sugiyama,
 } from 'd3-dag'
-import { ProjectState } from '../../../../lib/project'
+import { ProjectState } from '../../../lib/project'
+import { Vector3 } from 'three'
 
 export function renderDag(project: ProjectState) {
     const data = project.main.modules.map((module) => {
@@ -51,8 +52,11 @@ export function renderDag(project: ProjectState) {
         p.x = p.x - average.x
         p.y = p.y - average.y
     })
-    return result
+    return Object.entries(result).reduce((acc, [k, v]) => {
+        return { ...acc, [k]: new Vector3(v.x, v.y, 0) }
+    }, {})
 }
+
 export function extractPosition(level) {
     const pos = { id: level.data.id, x: level.y, y: level.x }
     const children = level.dataChildren.map((child) => {

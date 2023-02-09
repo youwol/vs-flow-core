@@ -110,10 +110,13 @@ class CSS2DRenderer {
     }
 
     render(scene: Scene, camera: Camera) {
-        if (scene.matrixWorldAutoUpdate === true) {
+        if (scene['matrixWorldAutoUpdate'] === true) {
             scene.updateMatrixWorld()
         }
-        if (camera.parent === null && camera.matrixWorldAutoUpdate === true) {
+        if (
+            camera.parent === null &&
+            camera['matrixWorldAutoUpdate'] === true
+        ) {
             camera.updateMatrixWorld()
         }
 

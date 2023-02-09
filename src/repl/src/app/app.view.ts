@@ -2,8 +2,9 @@ import { child$, VirtualDOM } from '@youwol/flux-view'
 import { AppState } from './app.state'
 import { TopBannerView } from './top-banner'
 import { DockableTabs } from '@youwol/fv-tabs'
-import { Viewer3DView } from './builder-view/viewer3D.view'
-
+import { Renderer3DView } from '../../../vs-flow-viewer/src'
+import { ReplaySubject } from 'rxjs'
+import { Implementation } from '../../../lib/modules'
 /**
  * @category View
  * @Category Entry Point
@@ -94,9 +95,12 @@ export class MainContentView implements VirtualDOM {
                             child$(
                                 this.state.repl.project$,
                                 (project) =>
-                                    new Viewer3DView({
-                                        state: this.state,
-                                        project,
+                                    new Renderer3DView({
+                                        project: project,
+                                        moduleSelected$:
+                                            new ReplaySubject<Implementation>(
+                                                1,
+                                            ),
                                     }),
                             ),
                         ],

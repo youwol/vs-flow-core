@@ -1,1 +1,1 @@
-export * from './hello.view'
+export * from './renderer3d.view'
