@@ -1,4 +1,5 @@
 import { AttributeTrait } from './attributes'
+import * as Attributes from './attributes'
 import { JsonMap } from '../../connections'
 import { Context } from '@youwol/logging'
 export * as Attributes from './attributes'
@@ -40,7 +41,7 @@ export class Configuration<T> {
 function parseObject<TSchema extends Schema>(model: TSchema, values) {
     return Object.entries(model).reduce((acc, [k, v]) => {
         const asAttribute = v as AttributeTrait<unknown>
-        if (asAttribute.__value != undefined) {
+        if ('__value' in asAttribute) {
             return {
                 ...acc,
                 [k]: values && values[k] ? values[k] : asAttribute.__value,
