@@ -82,10 +82,10 @@ export class ProjectState {
                     },
                     { modules: [], connections: [] },
                 )
-
+        const modulesSet = new Set([...this.main.modules, ...modules])
         return new ProjectState({
             main: new Workflow({
-                modules: [...this.main.modules, ...modules],
+                modules: [...modulesSet],
                 connections: [...this.main.connections, ...connections],
                 organizer: this.main.organizer,
             }),
