@@ -26,7 +26,8 @@ export type Message<TData = unknown> = {
 type Adaptor = (Message) => InputMessage
 
 type TSchema = {
-    adaptor: Configurations.Attributes.JsCode<(Message) => Message>
+    name: Configurations.Attributes.String
+    adaptor?: Configurations.Attributes.JsCode<(Message) => Message>
 }
 
 export class Connection
@@ -40,8 +41,11 @@ export class Connection
     public readonly configurationModel =
         new Configurations.Configuration<TSchema>({
             model: {
+                name: new Configurations.Attributes.String({
+                    value: 'Connection',
+                }),
                 adaptor: new Configurations.Attributes.JsCode({
-                    value: (d) => d,
+                    value: undefined,
                 }),
             },
         })
