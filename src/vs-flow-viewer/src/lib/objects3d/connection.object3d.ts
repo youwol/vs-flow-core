@@ -48,7 +48,7 @@ export class ConnectionObject3d extends Object3D {
     }
 }
 
-export class AdaptorObject3D extends Object3D {
+export class AdaptorObject3D extends Mesh {
     public readonly connection: Connection
     public readonly positions: { [k: string]: Vector3 }
 
@@ -63,16 +63,15 @@ export class AdaptorObject3D extends Object3D {
 
         const dir = new Vector3().subVectors(end, start).normalize()
 
-        const geometry = new IcosahedronGeometry(0.7)
-        const material = new MeshStandardMaterial({
+        this.geometry = new IcosahedronGeometry(0.7)
+        this.material = new MeshStandardMaterial({
             color: 0xffff00,
             emissive: 0xffcc00,
             roughness: 0.3,
             metalness: 0.3,
         })
-        const adaptorMesh = new Mesh(geometry, material)
         const pos = end.clone().add(dir.clone().multiplyScalar(-2))
-        adaptorMesh.position.set(pos.x, pos.y, pos.z)
-        adaptorMesh.castShadow = true
+        this.position.set(pos.x, pos.y, pos.z)
+        this.castShadow = true
     }
 }
