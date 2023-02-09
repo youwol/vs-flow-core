@@ -101,12 +101,11 @@ test('repl modules with IO & name', async () => {
         project.main.modules,
         project.main.connections,
     ]
-    expect(modules).toHaveLength(4)
+    expect(modules).toHaveLength(3)
     expect(modules[0]).toBeInstanceOf(RxjsFilter)
     expect(modules[1]).toBeInstanceOf(Sphere)
     expect(modules[1].uid).toBe('s0')
     expect(modules[2]).toBeInstanceOf(RxjsFilter)
-    expect(modules[3]).toBeInstanceOf(Sphere)
 
     expect(connections).toHaveLength(2)
     expect(connections[0].end.moduleId).toBe('s0')
@@ -119,10 +118,16 @@ test('repl modules with config', async () => {
         environment: new TestEnvironment({ toolboxes: [toolbox] }),
     })
     expect(repl).toBeTruthy()
-    const { project } = await repl.__(['sphere(s0,{"translation":{"x":4}})'])
+    const { project } = await repl.__([
+        'sphere(s0,{"transform":{"translation":{"x":4}}})',
+    ])
     const modules = project.main.modules
     expect(modules).toHaveLength(1)
-    expect(modules[0].configuration).toEqual({ translation: { x: 4 } })
+    expect(modules[0].configuration).toEqual({
+        name: 'Sphere',
+        radius: 0,
+        transform: { translation: { x: 4, y: 0, z: 0 } },
+    })
 })
 
 test('repl modules with config 2', async () => {
@@ -130,8 +135,31 @@ test('repl modules with config 2', async () => {
         environment: new TestEnvironment({ toolboxes: [toolbox] }),
     })
     expect(repl).toBeTruthy()
-    const { project } = await repl.__(['sphere({"translation":{"x":4}})'])
+    const { project } = await repl.__([
+        'sphere({"transform":{"translation":{"x":4}}})',
+    ])
     const modules = project.main.modules
     expect(modules).toHaveLength(1)
-    expect(modules[0].configuration).toEqual({ translation: { x: 4 } })
+    expect(modules[0].configuration).toEqual({
+        name: 'Sphere',
+        radius: 0,
+        transform: { translation: { x: 4, y: 0, z: 0 } },
+    })
+})
+
+test('repl misc 0', async () => {
+    const repl = new Repl({
+        environment: new TestEnvironment({ toolboxes: [toolbox] }),
+    })
+    const { project } = await repl.__([
+        ['filter(filter)', 'map(map)', 'mergeMap(m2)'],
+        ['of(of)', '#m2'],
+    ])
+
+    const [modules, connections] = [
+        project.main.modules,
+        project.main.connections,
+    ]
+    expect(modules).toHaveLength(4)
+    expect(connections).toHaveLength(3)
 })

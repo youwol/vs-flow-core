@@ -13,6 +13,7 @@ type Transform = {
 }
 
 type TSchema = {
+    name: Attributes.String
     radius: Attributes.Float
     transform: Transform
 }
@@ -36,6 +37,7 @@ export class Sphere extends Modules.DefaultImplementation<TSchema> {
             {
                 configurationModel: new Configuration<TSchema>({
                     model: {
+                        name: new Attributes.String({ value: 'Sphere' }),
                         radius: new Attributes.Float({ value: 0, min: 0 }),
                         transform: {
                             translation: {
