@@ -63,15 +63,17 @@
         ]
     },
     "dependencies": {
-        "@youwol/cdn-client": "^1.0.2",
         "@youwol/flux-view": "^1.0.3",
-        "rxjs": "^6.5.5"
+        "rxjs": "^6.5.5",
+        "three-trackballcontrols": "^0.0.8",
+        "three": "^0.128.0"
     },
     "youwol": {
         "cdnDependencies": {
-            "@youwol/cdn-client": "^1.0.2",
             "@youwol/flux-view": "^1.0.3",
-            "rxjs": "^6.5.5"
+            "rxjs": "^6.5.5",
+            "three-trackballcontrols": "^0.0.8",
+            "three": "^0.128.0"
         }
     }
 }

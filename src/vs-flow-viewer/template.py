@@ -9,6 +9,12 @@ folder_path = Path(__file__).parent
 
 pkg_json = parse_json(folder_path / 'package.json')
 
+load_dependencies = {
+    "@youwol/flux-view": "^1.0.3",
+    "rxjs": "^6.5.5",
+    "three-trackballcontrols": "^0.0.8",
+    "three": '^0.128.0'
+}
 
 template = Template(
     path=folder_path,
@@ -19,13 +25,13 @@ template = Template(
     author=pkg_json['author'],
     dependencies=Dependencies(
         runTime=RunTimeDeps(
-            externals={"@youwol/cdn-client": "^1.0.2", "@youwol/flux-view": "^1.0.3", "rxjs": "^6.5.5"}
+            externals=load_dependencies
         )
     ),
     bundles=Bundles(
           mainModule=MainModule(
               entryFile='./index.ts',
-              loadDependencies=["@youwol/cdn-client", "@youwol/flux-view", "rxjs"]
+              loadDependencies=list(load_dependencies.keys())
           )
         ),
     userGuide=True

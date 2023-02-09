@@ -1,18 +1,14 @@
 
 const runTimeDependencies = {
     "externals": {
-        "@youwol/cdn-client": "^1.0.2",
         "@youwol/flux-view": "^1.0.3",
-        "rxjs": "^6.5.5"
+        "rxjs": "^6.5.5",
+        "three-trackballcontrols": "^0.0.8",
+        "three": "^0.128.0"
     },
     "includedInBundle": {}
 }
 const externals = {
-    "@youwol/cdn-client": {
-        "commonjs": "@youwol/cdn-client",
-        "commonjs2": "@youwol/cdn-client",
-        "root": "@youwol/cdn-client_APIv1"
-    },
     "@youwol/flux-view": {
         "commonjs": "@youwol/flux-view",
         "commonjs2": "@youwol/flux-view",
@@ -22,13 +18,19 @@ const externals = {
         "commonjs": "rxjs",
         "commonjs2": "rxjs",
         "root": "rxjs_APIv6"
+    },
+    "three-trackballcontrols": {
+        "commonjs": "three-trackballcontrols",
+        "commonjs2": "three-trackballcontrols",
+        "root": "TrackballControls_APIv008"
+    },
+    "three": {
+        "commonjs": "three",
+        "commonjs2": "three",
+        "root": "THREE_APIv0128"
     }
 }
 const exportedSymbols = {
-    "@youwol/cdn-client": {
-        "apiKey": "1",
-        "exportedSymbol": "@youwol/cdn-client"
-    },
     "@youwol/flux-view": {
         "apiKey": "1",
         "exportedSymbol": "@youwol/flux-view"
@@ -36,15 +38,24 @@ const exportedSymbols = {
     "rxjs": {
         "apiKey": "6",
         "exportedSymbol": "rxjs"
+    },
+    "three-trackballcontrols": {
+        "apiKey": "008",
+        "exportedSymbol": "TrackballControls"
+    },
+    "three": {
+        "apiKey": "0128",
+        "exportedSymbol": "THREE"
     }
 }
 
 const mainEntry : {entryFile: string,loadDependencies:string[]} = {
     "entryFile": "./index.ts",
     "loadDependencies": [
-        "@youwol/cdn-client",
         "@youwol/flux-view",
-        "rxjs"
+        "rxjs",
+        "three-trackballcontrols",
+        "three"
     ]
 }
 
