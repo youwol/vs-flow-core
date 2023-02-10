@@ -166,8 +166,7 @@ export class Module<TImplementation extends Modules.Implementation> {
         fwdParams: ForwardArgs
         environment: IEnvironment
     }) {
-        return this.implementation instanceof Promise
-            ? await this.implementation(params)
-            : this.implementation(params)
+        const result = this.implementation(params)
+        return result instanceof Promise ? await result : result
     }
 }
