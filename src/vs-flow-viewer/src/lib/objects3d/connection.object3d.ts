@@ -8,6 +8,7 @@ import {
     MeshStandardMaterial,
     ArrowHelper,
     Mesh,
+    Color,
 } from 'three'
 import { Connection } from '../../../../lib/connections'
 
@@ -18,6 +19,7 @@ export class ConnectionObject3d extends Object3D {
     constructor(params: {
         connection: Connection
         positions: { [k: string]: Vector3 }
+        color?: Color
     }) {
         super()
         Object.assign(this, params)
@@ -25,7 +27,7 @@ export class ConnectionObject3d extends Object3D {
         const end = this.positions[this.connection.end.moduleId]
 
         const material = new LineBasicMaterial({
-            color: 0x0000ff,
+            color: params.color || 0x0000ff,
         })
 
         const geometry = new BufferGeometry().setFromPoints([start, end])

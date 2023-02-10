@@ -1,13 +1,10 @@
 import {
-    GridHelper,
     Light,
     Mesh,
     Object3D,
     PerspectiveCamera,
-    PlaneGeometry,
     Raycaster,
     Scene,
-    ShadowMaterial,
     Vector2,
     Vector3,
     WebGLRenderer,
@@ -17,19 +14,253 @@ import { ProjectState } from '../../../lib/project'
 import { CSS2DRenderer } from './renderers/css-2d-renderer'
 import * as THREE from 'three'
 import { ModuleObject3d } from './objects3d/module.object3d'
-import { ConnectionObject3d } from './objects3d/connection.object3d'
-import { fitSceneToContent, getBoundingBox } from './utils'
+import { fitSceneToContent } from './utils'
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls'
 import { ReplaySubject } from 'rxjs'
+import { Implementation } from '../../../lib/modules'
+import { ConnectionObject3d } from './objects3d/connection.object3d'
+import { GroupObject3d } from './objects3d/group.object3d'
+import { Layer } from '../../../lib/workflows'
+import { PseudoConnectionObject3d } from './objects3d/pseudo-connection.object3d'
+import { Connection } from '../../../lib/connections'
+import { computeCoordinates } from './dag'
+import { GroundObject3d } from './objects3d/ground.object3d'
 
 export type SelectableMesh = Mesh & {
     userData: { selectableTrait: SelectableTrait }
 }
 
+class InterLayersConnection {
+    connection: {
+        start: string
+        end: string
+    }
+    constructor(params: {
+        connection: {
+            start: string
+            end: string
+        }
+    }) {
+        Object.assign(this, params)
+    }
+}
+class IntraLayerConnection {
+    connection: Connection
+    constructor(params: { connection: Connection }) {
+        Object.assign(this, params)
+    }
+}
+
+export class Dynamic3dContent {
+    public readonly environment3d: Environment3D
+    public readonly project: ProjectState
+    public readonly entitiesPosition: { [k: string]: Vector3 }
+    public readonly layerOrganizer: LayerOrganizer
+    public readonly modules: ModuleObject3d[]
+    public readonly groups: GroupObject3d[]
+    public readonly intraConnection: ConnectionObject3d[]
+    public readonly interConnection: PseudoConnectionObject3d[]
+
+    public lights: Object3D[]
+    public ground: Object3D[]
+
+    constructor(params: {
+        project: ProjectState
+        uidSelected$: ReplaySubject<string>
+        layerOrganizer: LayerOrganizer
+        entitiesPosition: { [k: string]: Vector3 }
+        environment3d: Environment3D
+    }) {
+        Object.assign(this, params)
+        this.modules = this.layerOrganizer.modules.map((module) => {
+            return new ModuleObject3d({
+                module: module,
+                entitiesPositions: this.entitiesPosition,
+                uidSelected$: params.uidSelected$,
+            })
+        })
+        this.groups = this.layerOrganizer.groups.map((group) => {
+            return new GroupObject3d({
+                project: this.project,
+                environment3d: this.environment3d,
+                group: group,
+                entitiesPositions: this.entitiesPosition,
+                uidSelected$: params.uidSelected$,
+            })
+        })
+        this.intraConnection = this.layerOrganizer.intraConnections.map((c) => {
+            return new ConnectionObject3d({
+                connection: c.connection,
+                positions: this.entitiesPosition,
+            })
+        })
+        this.interConnection = this.layerOrganizer.interConnections.map((c) => {
+            return new PseudoConnectionObject3d({
+                connection: c.connection,
+                positions: this.entitiesPosition,
+            })
+        })
+
+        this.lights = this.createLights([...this.modules, ...this.groups])
+        //this.ground = this.createGround([...this.modules, ...this.groups])
+    }
+
+    addToScene(container: Scene | Object3D) {
+        const allElements = [
+            this.lights,
+            this.ground,
+            this.modules,
+            this.groups,
+            this.intraConnection,
+            this.interConnection,
+        ]
+        allElements.flat().forEach((mesh: Object3D) => {
+            container.add(mesh)
+        })
+    }
+
+    private createLights(meshes: Object3D[]): Light[] {
+        return meshes
+            .map((mesh) => {
+                const light = new THREE.DirectionalLight(0xffffff, 1)
+                light.position.set(
+                    mesh.position.x,
+                    mesh.position.y + 1,
+                    mesh.position.z,
+                )
+                light.target = mesh
+                light.castShadow = true
+                return light
+            })
+            .flat()
+    }
+    /*
+    private createGround(meshes: Mesh[]): Object3D[] {
+        if (meshes.length == 0) {
+            return [new GridHelper(10, 10)]
+        }
+        const bbox = getBoundingBox(meshes)
+        const size = new Vector3()
+        bbox.getSize(size)
+        const maxSize = 1.25 * Math.max(size.x, size.y, size.z)
+
+        const center = new Vector3()
+        bbox.getCenter(center)
+
+        const divisions = 100
+        const helper = new GridHelper(maxSize, divisions)
+
+        helper.material['opacity'] = 0.25
+        helper.material['transparent'] = true
+
+        const planeGeometry = new PlaneGeometry(maxSize, maxSize)
+        planeGeometry.rotateX(-Math.PI / 2)
+        const planeMaterial = new ShadowMaterial({
+            color: 0x000000,
+            opacity: 0.2,
+        })
+        const plane = new Mesh(planeGeometry, planeMaterial)
+        plane.receiveShadow = true
+        plane.position.set(center.x, bbox.min.y - 0.2 * size.y, center.z)
+        helper.position.set(center.x, bbox.min.y - 0.2 * size.y, center.z)
+
+        return [plane, helper]
+    }*/
+}
+export class LayerOrganizer {
+    public readonly project: ProjectState
+    public readonly layerId: string
+    public readonly intraConnections: IntraLayerConnection[]
+    public readonly interConnections: InterLayersConnection[]
+    public readonly layersChildren: { [_key: string]: string[] }
+    public readonly modules: Implementation[]
+    public readonly groups: Layer[]
+    public readonly moduleIds: string[]
+    public readonly allChildrenModuleIds: string[]
+    public readonly groupIds: string[]
+    public readonly entitiesId: string[]
+
+    constructor(params: { project: ProjectState; layerId: string }) {
+        Object.assign(this, params)
+        const layer = this.project.main.rootLayer.filter(
+            (l) => l.uid == this.layerId,
+        )[0]
+        this.moduleIds = layer.moduleIds
+        this.modules = this.moduleIds.map((uid) => {
+            return this.project.main.modules.find((m) => m.uid == uid)
+        })
+        this.groups = layer.children
+        this.groupIds = this.groups.map((l) => l.uid)
+        this.entitiesId = [...this.moduleIds, ...this.groupIds]
+
+        this.intraConnections = this.project.main.connections
+            .filter(
+                (connection) =>
+                    this.moduleIds.includes(connection.start.moduleId) &&
+                    this.moduleIds.includes(connection.end.moduleId),
+            )
+            .map((connection) => new IntraLayerConnection({ connection }))
+
+        this.layersChildren = layer.children.reduce((acc, l) => {
+            const moduleIds = l.reduce((acc, e) => [...acc, ...e.moduleIds], [])
+            return { ...acc, [l.uid]: moduleIds }
+        }, {})
+        this.allChildrenModuleIds = Object.values(this.layersChildren).flat()
+
+        const findParent = (id): string => {
+            return layer.moduleIds.includes(id)
+                ? id
+                : Object.entries(this.layersChildren).find(
+                      ([_uid, moduleIds]) => {
+                          return moduleIds.includes(id)
+                      },
+                  )[0]
+        }
+
+        this.interConnections = this.project.main.connections
+            .filter(
+                (connection) =>
+                    (this.moduleIds.includes(connection.start.moduleId) &&
+                        this.allChildrenModuleIds.includes(
+                            connection.end.moduleId,
+                        )) ||
+                    (this.moduleIds.includes(connection.end.moduleId) &&
+                        this.allChildrenModuleIds.includes(
+                            connection.start.moduleId,
+                        )),
+            )
+            .map((connection) => {
+                return new InterLayersConnection({
+                    connection: {
+                        start: findParent(connection.start.moduleId),
+                        end: findParent(connection.end.moduleId),
+                    },
+                })
+            })
+    }
+
+    dagData() {
+        return this.entitiesId.map((uid) => {
+            const intraConnections = this.intraConnections
+                .filter((c) => c.connection.end.moduleId == uid)
+                .map((c) => c.connection.start.moduleId)
+            const interConnections = this.interConnections
+                .filter((c) => c.connection.end == uid)
+                .map((c) => c.connection.start)
+
+            return {
+                id: uid,
+                parentIds: [...intraConnections, ...interConnections],
+            }
+        })
+    }
+}
+
 export class Environment3D {
     public readonly project: ProjectState
-    public readonly positions: { [_k: string]: Vector3 }
-
+    public readonly layerId: string
+    public readonly entitiesPosition: { [_k: string]: Vector3 }
+    public readonly layerOrganizer: LayerOrganizer
     public readonly htmlElementContainer: HTMLDivElement
 
     public readonly rayCaster = new Raycaster()
@@ -41,17 +272,28 @@ export class Environment3D {
     public readonly camera: PerspectiveCamera
     public readonly controls: TrackballControls
 
-    public readonly selectables: SelectableMesh[]
-
+    public selectables: SelectableMesh[] = []
+    public ground: GroundObject3d
     public hovered: SelectableMesh
     public readonly uidSelected$: ReplaySubject<string>
+
     constructor(params: {
         htmlElementContainer: HTMLDivElement
+        layerId: string
         project: ProjectState
-        positions: { [_k: string]: Vector3 }
         uidSelected$: ReplaySubject<string>
     }) {
         Object.assign(this, params)
+        this.layerOrganizer = new LayerOrganizer({
+            project: this.project,
+            layerId: this.layerId,
+        })
+        const organizer = new LayerOrganizer({
+            project: this.project,
+            layerId: this.project.main.rootLayer.uid,
+        })
+        const dagData = organizer.dagData()
+        this.entitiesPosition = computeCoordinates(dagData)
 
         this.renderer.shadowMap.enabled = true
         this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -101,38 +343,16 @@ export class Environment3D {
                 this.uidSelected$.next(undefined)
             }
         }
-
-        const modules = this.project.main.modules.map(
-            (module) =>
-                new ModuleObject3d({
-                    module,
-                    positions: this.positions,
-                    uidSelected$: params.uidSelected$,
-                }),
-        )
-        const connections = this.project.main.connections.map(
-            (connection) =>
-                new ConnectionObject3d({
-                    connection,
-                    positions: this.positions,
-                }),
-        )
-        const lights = this.createLights(modules)
-
-        const ground = this.createGround(modules)
-
-        modules.forEach((mesh) => this.scene.add(mesh))
-
-        connections.forEach((mesh) => this.scene.add(mesh))
-
-        lights.forEach((light) => {
-            this.scene.add(light)
+        const dynamicContent3d = new Dynamic3dContent({
+            project: this.project,
+            uidSelected$: this.uidSelected$,
+            layerOrganizer: this.layerOrganizer,
+            entitiesPosition: this.entitiesPosition,
+            environment3d: this,
         })
-        ground.forEach((obj) => this.scene.add(obj))
+        dynamicContent3d.addToScene(this.scene)
 
-        this.selectables = modules
-            .map((m) => m.children)
-            .flat() as SelectableMesh[]
+        this.addSelectables(dynamicContent3d)
 
         setTimeout(() => {
             const observer = new window['ResizeObserver'](() => {
@@ -155,51 +375,15 @@ export class Environment3D {
         })
     }
 
-    private createLights(meshes: Object3D[]): Light[] {
-        return meshes
-            .map((mesh) => {
-                const light = new THREE.DirectionalLight(0xffffff, 1)
-                light.position.set(
-                    mesh.position.x,
-                    mesh.position.y + 1,
-                    mesh.position.z,
-                )
-                light.target = mesh
-                light.castShadow = true
-                return light
-            })
-            .flat()
-    }
-
-    private createGround(meshes: Mesh[]): Object3D[] {
-        if (meshes.length == 0) {
-            return [new GridHelper(10, 10)]
-        }
-        const bbox = getBoundingBox(meshes)
-        const size = new Vector3()
-        bbox.getSize(size)
-        const maxSize = 1.25 * Math.max(size.x, size.y, size.z)
-
-        const center = new Vector3()
-        bbox.getCenter(center)
-
-        const divisions = 100
-        const helper = new GridHelper(maxSize, divisions)
-
-        helper.material['opacity'] = 0.25
-        helper.material['transparent'] = true
-
-        const planeGeometry = new PlaneGeometry(maxSize, maxSize)
-        planeGeometry.rotateX(-Math.PI / 2)
-        const planeMaterial = new ShadowMaterial({
-            color: 0x000000,
-            opacity: 0.2,
-        })
-        const plane = new Mesh(planeGeometry, planeMaterial)
-        plane.receiveShadow = true
-        plane.position.set(center.x, bbox.min.y - 0.2 * size.y, 0)
-        helper.position.set(center.x, bbox.min.y - 0.2 * size.y, 0)
-
-        return [plane, helper]
+    addSelectables(dynamicContent3d: Dynamic3dContent) {
+        this.selectables = [
+            ...this.selectables,
+            ...([...dynamicContent3d.modules, ...dynamicContent3d.groups]
+                .map((m) => m.children)
+                .flat() as SelectableMesh[]),
+        ]
+        this.ground && this.scene.remove(this.ground)
+        this.ground = new GroundObject3d({ selectables: this.selectables })
+        this.scene.add(this.ground)
     }
 }

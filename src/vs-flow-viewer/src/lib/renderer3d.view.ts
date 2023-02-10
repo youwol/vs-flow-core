@@ -13,7 +13,7 @@ export class Renderer3DView {
     }
     public readonly project: ProjectState
     public readonly children: VirtualDOM[]
-    public readonly positions: { [_k: string]: Vector3 }
+    public readonly entitiesPosition: { [_k: string]: Vector3 }
 
     public environment3D: Environment3D
 
@@ -23,8 +23,10 @@ export class Renderer3DView {
     }) {
         Object.assign(this, params)
 
-        this.positions =
-            this.project.main.modules.length > 0 ? renderDag(this.project) : {}
+        this.entitiesPosition =
+            this.project.main.modules.length > 0
+                ? renderDag(this.project, this.project.main.rootLayer)
+                : {}
 
         this.children = [
             {
@@ -33,8 +35,8 @@ export class Renderer3DView {
                     this.environment3D = new Environment3D({
                         htmlElementContainer: htmlElement,
                         project: this.project,
-                        positions: this.positions,
                         uidSelected$: params.uidSelected,
+                        layerId: this.project.main.rootLayer.uid,
                     })
                     animate(this.environment3D)
                 },

@@ -11,7 +11,7 @@ import { ReplaySubject } from 'rxjs'
 
 export class ModuleObject3d extends Mesh implements SelectableTrait {
     public readonly module: Implementation
-    public readonly positions: { [k: string]: Vector3 }
+    public readonly entitiesPositions: { [k: string]: Vector3 }
 
     public readonly sphere: Mesh
     public readonly sphereMaterial: MeshStandardMaterial
@@ -20,21 +20,12 @@ export class ModuleObject3d extends Mesh implements SelectableTrait {
     public selected = false
     constructor(params: {
         module: Implementation
-        positions: { [k: string]: Vector3 }
+        entitiesPositions: { [k: string]: Vector3 }
         uidSelected$: ReplaySubject<string>
     }) {
         super()
         Object.assign(this, params)
-        this.uidSelected$.subscribe((uid) => {
-            if (uid != this.module.uid) {
-                this.selected = false
-                this.onRestored()
-                return
-            }
-            this.onSelected()
-        })
-        Object.assign(this, params)
-        const position = this.positions[this.module.uid]
+        const position = this.entitiesPositions[this.module.uid]
         const geometry = new SphereBufferGeometry(2, 32, 32)
         this.sphereMaterial = new MeshStandardMaterial({
             color: 0x049ef4,
@@ -43,7 +34,7 @@ export class ModuleObject3d extends Mesh implements SelectableTrait {
             emissive: 0x8f0000,
         })
         this.sphere = new Mesh(geometry, this.sphereMaterial)
-        this.sphere.position.set(position.x, position.y, 0)
+        this.sphere.position.set(position.x, position.y, position.z)
         this.sphere.castShadow = true
         const labelDiv = document.createElement('div')
         labelDiv.className = 'label'
@@ -55,6 +46,15 @@ export class ModuleObject3d extends Mesh implements SelectableTrait {
         label.layers.set(0)
         this.children = [this.sphere]
         this.sphere.userData.selectableTrait = this
+
+        this.uidSelected$.subscribe((uid) => {
+            if (uid != this.module.uid) {
+                this.selected = false
+                this.onRestored()
+                return
+            }
+            this.onSelected()
+        })
     }
 
     getEntity(): Implementation {
