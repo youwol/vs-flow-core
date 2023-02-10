@@ -142,6 +142,25 @@ export class ModuleInstance extends NodeProjectBase {
 /**
  * @category Nodes
  */
+export class Layer extends NodeProjectBase {
+    /**
+     * @group Immutable Constants
+     */
+    public readonly category: NodeProjectCategory = 'Layer'
+
+    constructor(params: { id: string; name: string; children }) {
+        super({
+            id: params.id,
+            name: params.name,
+            children: params.children,
+        })
+        Object.assign(this, params)
+    }
+}
+
+/**
+ * @category Nodes
+ */
 export class Workflow extends NodeProjectBase {
     /**
      * @group Immutable Constants
@@ -178,6 +197,22 @@ export class Macros extends NodeProjectBase {
 }
 
 function createRootNode(project: ProjectState) {
+    const createLayerNode = (layer) => {
+        return new Layer({
+            id: layer.uid,
+            name: layer.uid,
+            children: [
+                ...layer.moduleIds.map(
+                    (moduleId) =>
+                        new ModuleInstance({
+                            name: moduleId,
+                            id: moduleId,
+                        }),
+                ),
+                ...layer.children.map((l) => createLayerNode(l)),
+            ],
+        })
+    }
     return new ProjectNode({
         id: 'Project',
         name: 'Project',
@@ -185,12 +220,18 @@ function createRootNode(project: ProjectState) {
             new Workflow({
                 id: 'main',
                 name: 'main',
-                children: project.main.modules.map((module) => {
-                    return new ModuleInstance({
-                        name: module.configuration['name'] as string,
-                        id: module.uid,
-                    })
-                }),
+                children: [
+                    ...project.main.rootLayer.moduleIds.map(
+                        (moduleId) =>
+                            new ModuleInstance({
+                                name: moduleId,
+                                id: moduleId,
+                            }),
+                    ),
+                    ...project.main.rootLayer.children.map((l) =>
+                        createLayerNode(l),
+                    ),
+                ],
             }),
             new Macros({
                 id: 'macros',
