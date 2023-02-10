@@ -166,6 +166,45 @@ test('repl modules with config 3', async () => {
     })
 })
 
+test('repl modules with config 4', async () => {
+    const repl = new Repl({
+        environment: new TestEnvironment({ toolboxes: [toolbox] }),
+    })
+    expect(repl).toBeTruthy()
+    const { project } = await repl.__(['sphere(s0,{@c})'], {
+        configurations: {
+            '@c': { transform: { translation: { x: 4 } } },
+        },
+    })
+    const modules = project.main.modules
+    expect(modules).toHaveLength(1)
+    expect(modules[0].configuration).toEqual({
+        name: 'Sphere',
+        radius: 0,
+        transform: { translation: { x: 4, y: 0, z: 0 } },
+    })
+})
+
+test('repl organize', async () => {
+    const repl = new Repl({
+        environment: new TestEnvironment({ toolboxes: [toolbox] }),
+    })
+    await repl.__([
+        ['filter(filter)', 'map(map)', 'mergeMap(m2)'],
+        ['of(of)', '#m2'],
+    ])
+    const { project } = repl.organize([
+        { layerId: 'foo', uids: ['filter', 'map'] },
+    ])
+    expect(project.main.rootLayer.moduleIds).toEqual(['m2', 'of'])
+    expect(project.main.rootLayer.children).toHaveLength(1)
+    expect(project.main.rootLayer.children[0].moduleIds).toEqual([
+        'filter',
+        'map',
+    ])
+    expect(project.main.rootLayer.children[0].children).toHaveLength(0)
+})
+
 test('repl misc 0', async () => {
     const repl = new Repl({
         environment: new TestEnvironment({ toolboxes: [toolbox] }),
@@ -181,4 +220,21 @@ test('repl misc 0', async () => {
     ]
     expect(modules).toHaveLength(4)
     expect(connections).toHaveLength(3)
+})
+
+test('repl misc 1', async () => {
+    const repl = new Repl({
+        environment: new TestEnvironment({ toolboxes: [toolbox] }),
+    })
+    expect(repl).toBeTruthy()
+    const { project } = await repl.__(['filter>0', 'a0=>sphere>0'], {
+        adaptors: {
+            a0: ({ data }) => ({ data, configuration: {} }),
+        },
+    })
+    const connections = project.main.connections
+    expect(connections).toHaveLength(1)
+    expect(connections[0].configuration.adaptor).toBeTruthy()
+    const r = connections[0].adapt({ data: 5 })
+    expect(r).toEqual({ data: 5, configuration: {} })
 })

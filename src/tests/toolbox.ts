@@ -39,7 +39,9 @@ export const toolbox = new ToolBox({
                 typeId: 'plot',
             },
             implementation: ({ fwdParams }) => {
-                return new PlotModule(fwdParams)
+                return new Promise<Implementation>((resolve) => {
+                    setTimeout(() => resolve(new PlotModule(fwdParams)), 0)
+                })
             },
         }),
     ],
