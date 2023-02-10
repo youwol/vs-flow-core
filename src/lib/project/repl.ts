@@ -150,7 +150,9 @@ async function parseElement(
     const [outer, arg] = result
     const type = module.split(outer)[0]
     const args = arg.split(',')
+
     if (args[0].includes('{')) {
+        //conf = parseConfig(module)
         const result = /{(.*?)}/.exec(module)
         conf = result[1].includes('@')
             ? options.configurations[result[1]]
@@ -158,9 +160,13 @@ async function parseElement(
     } else {
         moduleId = args[0]
     }
-    if (args[1]) {
-        conf = JSON.parse(args[1])
+    if (args[1] && args[1].includes('{')) {
+        const result = /{(.*?)}/.exec(args[1])
+        conf = result[1].includes('@')
+            ? options.configurations[result[1]]
+            : JSON.parse(args[1])
     }
+
     const instance = await environment.instantiateModule({
         typeId: type,
         moduleId,
