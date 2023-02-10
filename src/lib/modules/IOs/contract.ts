@@ -564,9 +564,7 @@ export class SomeOf<T, TConverted = T[]> extends BaseExpectation<TConverted> {
         const dataResolved = children
             .filter((expectation) => expectation.succeeded)
             .map((child) => child.value)
-        const normalized = this.normalizeTo
-            ? this.normalizeTo(dataResolved, context)
-            : (dataResolved as unknown as TConverted)
+        const normalized = this.normalizeTo(dataResolved, context)
 
         if (
             dataResolved.length == 0 ||
@@ -835,12 +833,11 @@ export function expectSome<T, TConverted = T[]>({
     count,
     normalizeTo,
 }: {
-    description?: string
+    description: string
     when: IExpectation<T>
     count?: number
     normalizeTo?: (d: T[]) => TConverted
 }): BaseExpectation<TConverted> {
-    description = description || when.description
     const fullDescription = count
         ? `${count} of "${description}"`
         : `1 or more of "${description}"`
