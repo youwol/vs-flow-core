@@ -1,6 +1,6 @@
 import { IEnvironment } from '../environment'
 import { Connection } from '../connections'
-import { Workflow } from '../workflows'
+import { Layer, Workflow } from '../workflows'
 import { Modules } from '..'
 import { ApiTrait } from '../modules/traits'
 import { InputMessage } from '../modules'
@@ -83,11 +83,54 @@ export class ProjectState {
                     { modules: [], connections: [] },
                 )
         const modulesSet = new Set([...this.main.modules, ...modules])
+        const root = this.main.rootLayer
         return new ProjectState({
             main: new Workflow({
                 modules: [...modulesSet],
                 connections: [...this.main.connections, ...connections],
-                organizer: this.main.organizer,
+                rootLayer: new Layer({
+                    uid: root.uid,
+                    children: root.children,
+                    moduleIds: [
+                        ...root.moduleIds,
+                        ...[...modulesSet].map((m) => m.uid),
+                    ],
+                }),
+            }),
+            macros: this.macros,
+            environment: this.environment,
+        })
+    }
+
+    addLayer({
+        parentLayerId,
+        layerId,
+        // either module ids or layer ids
+        uids,
+    }: {
+        parentLayerId?: string
+        layerId?: string
+        uids: string[]
+    }) {
+        const moduleIds = uids.filter((uid) =>
+            this.main.modules.find((m) => m.uid == uid),
+        )
+        const layers = this.main.rootLayer.filter((l) => uids.includes(l.uid))
+
+        const layer = new Layer({
+            uid: layerId,
+            moduleIds: moduleIds,
+            children: layers,
+        })
+        const rootLayer = this.main.rootLayer.merge({
+            include: layer,
+            at: parentLayerId,
+        })
+        return new ProjectState({
+            main: new Workflow({
+                modules: this.main.modules,
+                connections: this.main.connections,
+                rootLayer,
             }),
             macros: this.macros,
             environment: this.environment,

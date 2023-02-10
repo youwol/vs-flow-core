@@ -63,6 +63,17 @@ export class Repl {
     ): Observable<{ project: ProjectState }> {
         return from(this.__(flows, options))
     }
+
+    organize(
+        data: [{ layerId: string; parentLayerId?: string; uids: string[] }],
+    ) {
+        const project = this.project$.value
+        const newProject = data.reduce((acc, e) => {
+            return project.addLayer(e)
+        }, project)
+        this.project$.next(newProject)
+        return { project: newProject }
+    }
 }
 
 async function parseElement(
