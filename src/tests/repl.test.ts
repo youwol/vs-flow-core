@@ -3,6 +3,7 @@ import { TestEnvironment } from './environment'
 import { toolbox } from './toolbox'
 import { Sphere } from './modules-implementation/sphere.module'
 import { RxjsFilter } from '../toolboxes/rxjs'
+import { attr$ } from '@youwol/flux-view'
 
 test('repl import', async () => {
     const repl = new Repl({
@@ -203,6 +204,34 @@ test('repl organize', async () => {
         'map',
     ])
     expect(project.main.rootLayer.children[0].children).toHaveLength(0)
+})
+
+test('repl with view', async () => {
+    const repl = new Repl({
+        environment: new TestEnvironment({ toolboxes: [toolbox] }),
+    })
+    expect(repl).toBeTruthy()
+    await repl.__(['timer(t0,{"name":"1s"})', 'filter(f0,{@f0})', 'map(m0)'], {
+        configurations: {
+            '@f0': {
+                function: ({ data }) => data % 2 == 0,
+            },
+        },
+    })
+    const { project } = repl.addView({
+        viewId: 'Test',
+        implementation: (project) => {
+            const obs = project.getObservable({
+                moduleId: 'm0',
+                slotId: 'output$',
+            })
+
+            return {
+                innerText: attr$(obs, () => new Date().toTimeString()),
+            }
+        },
+    })
+    expect(project.views.Test).toBeTruthy()
 })
 
 test('repl misc 0', async () => {
