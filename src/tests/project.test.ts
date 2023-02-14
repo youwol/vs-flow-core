@@ -5,30 +5,30 @@ import { Workflow } from '../lib/workflows'
 
 test('project', async () => {
     const environment = new TestEnvironment({ toolboxes: [toolbox] })
-    let state = new ProjectState({
+    let project = new ProjectState({
         main: new Workflow(),
         macros: [],
         environment,
     })
-    expect(state).toBeTruthy()
+    expect(project).toBeTruthy()
     const module = await environment.instantiateModule({
         typeId: 'sphere',
     })
 
-    state = state.addFlows([
+    project = project.addFlows([
         [new FlowNode({ module, input: 'input$', output: 'output$' })],
-    ])
-    expect(state.main.modules).toHaveLength(1)
+    ]).project
+    expect(project.main.modules).toHaveLength(1)
 })
 
 test('project2', async () => {
     const environment = new TestEnvironment({ toolboxes: [toolbox] })
-    let state = new ProjectState({
+    let project = new ProjectState({
         main: new Workflow(),
         macros: [],
         environment,
     })
-    expect(state).toBeTruthy()
+    expect(project).toBeTruthy()
     const sphere = await environment.instantiateModule({
         typeId: 'sphere',
     })
@@ -36,7 +36,7 @@ test('project2', async () => {
         typeId: 'filter',
     })
 
-    state = state.addFlows([
+    project = project.addFlows([
         [
             new FlowNode({
                 module: filter,
@@ -49,19 +49,19 @@ test('project2', async () => {
                 output: 'output$',
             }),
         ],
-    ])
-    expect(state.main.modules).toHaveLength(2)
-    expect(state.main.connections).toHaveLength(1)
+    ]).project
+    expect(project.main.modules).toHaveLength(2)
+    expect(project.main.connections).toHaveLength(1)
 })
 
 test('project layer simple', async () => {
     const environment = new TestEnvironment({ toolboxes: [toolbox] })
-    let state = new ProjectState({
+    let project = new ProjectState({
         main: new Workflow(),
         macros: [],
         environment,
     })
-    expect(state).toBeTruthy()
+    expect(project).toBeTruthy()
     const m0 = await environment.instantiateModule({
         moduleId: 'm0',
         typeId: 'timer',
@@ -79,7 +79,7 @@ test('project layer simple', async () => {
         typeId: 'sphere',
     })
 
-    state = state.addFlows([
+    project = project.addFlows([
         [
             new FlowNode({
                 module: m0,
@@ -102,34 +102,37 @@ test('project layer simple', async () => {
                 output: 'output$',
             }),
         ],
-    ])
-    expect(state.main.modules).toHaveLength(4)
-    expect(state.main.connections).toHaveLength(3)
-    expect(state.main.rootLayer.moduleIds).toHaveLength(4)
-    expect(state.main.rootLayer.children).toHaveLength(0)
-    state = state.addLayer({ layerId: 'foo', uids: ['m1', 'm2', 'm3'] })
-    expect(state.main.rootLayer.moduleIds).toHaveLength(1)
-    expect(state.main.rootLayer.children).toHaveLength(1)
-    expect(state.main.rootLayer.children[0].uid).toBe('foo')
-    expect(state.main.rootLayer.children[0].moduleIds).toHaveLength(3)
-    expect(state.main.rootLayer.children[0].children).toHaveLength(0)
+    ]).project
+    expect(project.main.modules).toHaveLength(4)
+    expect(project.main.connections).toHaveLength(3)
+    expect(project.main.rootLayer.moduleIds).toHaveLength(4)
+    expect(project.main.rootLayer.children).toHaveLength(0)
+    project = project.addLayer({
+        layerId: 'foo',
+        uids: ['m1', 'm2', 'm3'],
+    }).project
+    expect(project.main.rootLayer.moduleIds).toHaveLength(1)
+    expect(project.main.rootLayer.children).toHaveLength(1)
+    expect(project.main.rootLayer.children[0].uid).toBe('foo')
+    expect(project.main.rootLayer.children[0].moduleIds).toHaveLength(3)
+    expect(project.main.rootLayer.children[0].children).toHaveLength(0)
 
-    state = state.addLayer({
+    project = project.addLayer({
         parentLayerId: 'foo',
         layerId: 'bar',
         uids: ['m2', 'm3'],
-    })
-    expect(state.main.rootLayer.moduleIds).toHaveLength(1)
-    expect(state.main.rootLayer.children).toHaveLength(1)
-    expect(state.main.rootLayer.children[0].uid).toBe('foo')
-    expect(state.main.rootLayer.children[0].moduleIds).toHaveLength(1)
-    expect(state.main.rootLayer.children[0].children).toHaveLength(1)
+    }).project
+    expect(project.main.rootLayer.moduleIds).toHaveLength(1)
+    expect(project.main.rootLayer.children).toHaveLength(1)
+    expect(project.main.rootLayer.children[0].uid).toBe('foo')
+    expect(project.main.rootLayer.children[0].moduleIds).toHaveLength(1)
+    expect(project.main.rootLayer.children[0].children).toHaveLength(1)
 
-    expect(state.main.rootLayer.children[0].children[0].uid).toBe('bar')
-    expect(state.main.rootLayer.children[0].children[0].moduleIds).toHaveLength(
-        2,
-    )
-    expect(state.main.rootLayer.children[0].children[0].children).toHaveLength(
-        0,
-    )
+    expect(project.main.rootLayer.children[0].children[0].uid).toBe('bar')
+    expect(
+        project.main.rootLayer.children[0].children[0].moduleIds,
+    ).toHaveLength(2)
+    expect(
+        project.main.rootLayer.children[0].children[0].children,
+    ).toHaveLength(0)
 })
