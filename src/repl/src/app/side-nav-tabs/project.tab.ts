@@ -74,6 +74,8 @@ type NodeProjectCategory =
     | 'Layer'
     | 'Workflow'
     | 'Macros'
+    | 'Views'
+    | 'View'
 
 /**
  * @category Nodes
@@ -196,23 +198,59 @@ export class Macros extends NodeProjectBase {
     }
 }
 
-function createRootNode(project: ProjectState) {
-    const createLayerNode = (layer) => {
-        return new Layer({
-            id: layer.uid,
-            name: layer.uid,
-            children: [
-                ...layer.moduleIds.map(
-                    (moduleId) =>
-                        new ModuleInstance({
-                            name: moduleId,
-                            id: moduleId,
-                        }),
-                ),
-                ...layer.children.map((l) => createLayerNode(l)),
-            ],
+/**
+ * @category Nodes
+ */
+export class Views extends NodeProjectBase {
+    /**
+     * @group Immutable Constants
+     */
+    public readonly category: NodeProjectCategory = 'Views'
+
+    constructor(params: { id: string; name: string; children }) {
+        super({
+            id: params.id,
+            name: params.name,
+            children: params.children,
         })
+        Object.assign(this, params)
     }
+}
+
+/**
+ * @category Nodes
+ */
+export class View extends NodeProjectBase {
+    /**
+     * @group Immutable Constants
+     */
+    public readonly category: NodeProjectCategory = 'View'
+
+    constructor(params: { id: string; name: string }) {
+        super({
+            id: params.id,
+            name: params.name,
+        })
+        Object.assign(this, params)
+    }
+}
+export function createLayerNode(layer) {
+    return new Layer({
+        id: layer.uid,
+        name: layer.uid,
+        children: [
+            ...layer.moduleIds.map(
+                (moduleId) =>
+                    new ModuleInstance({
+                        name: moduleId,
+                        id: moduleId,
+                    }),
+            ),
+            ...layer.children.map((l) => createLayerNode(l)),
+        ],
+    })
+}
+export function createProjectRootNode(project: ProjectState) {
     return new ProjectNode({
         id: 'Project',
         name: 'Project',
@@ -249,6 +287,13 @@ function createRootNode(project: ProjectState) {
                     })
                 }),
             }),
+            new Views({
+                id: 'views',
+                name: 'views',
+                children: Object.entries(project.views).map(([k]) => {
+                    return new View({ id: k, name: k })
+                }),
+            }),
         ],
     })
 }
@@ -267,6 +312,8 @@ class NodeView implements VirtualDOM {
         ModuleInstance: 'fas fa-cube',
         Layer: 'fas fa-object-group',
         Macros: 'fas fa-play',
+        Views: 'fas fa-code',
+        View: 'fas fa-code',
     }
 
     /**
