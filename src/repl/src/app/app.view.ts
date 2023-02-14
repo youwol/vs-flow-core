@@ -2,7 +2,8 @@ import { child$, VirtualDOM } from '@youwol/flux-view'
 import { AppState } from './app.state'
 import { TopBannerView } from './top-banner'
 import { DockableTabs } from '@youwol/fv-tabs'
-import { Renderer3DView } from '../../../vs-flow-viewer/src'
+import { ContentView } from './content-view/content.view'
+import { map } from 'rxjs/operators'
 /**
  * @category View
  * @Category Entry Point
@@ -82,6 +83,7 @@ export class MainContentView implements VirtualDOM {
                 class: 'flex-grow-1 h-100 d-flex flex-column',
                 style: {
                     position: 'relative',
+                    minWidth: '0px',
                 },
                 children: [
                     {
@@ -91,11 +93,13 @@ export class MainContentView implements VirtualDOM {
                         },
                         children: [
                             child$(
-                                this.state.repl.project$,
+                                this.state.repl.project$.pipe(
+                                    map(({ project }) => project),
+                                ),
                                 (project) =>
-                                    new Renderer3DView({
+                                    new ContentView({
+                                        state: this.state,
                                         project: project,
-                                        uidSelected: this.state.selectedUid$,
                                     }),
                             ),
                         ],

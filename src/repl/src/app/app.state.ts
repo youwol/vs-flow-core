@@ -38,6 +38,16 @@ export class AppState {
     public readonly selectedUid$ = new ReplaySubject<string>(1)
 
     /**
+     * @group Observable
+     */
+    public readonly openTabs$ = new BehaviorSubject<ProjectNode[]>([])
+
+    /**
+     * @group Observables
+     */
+    public readonly selectedTab$ = new BehaviorSubject<ProjectNode>(undefined)
+
+    /**
      *
      * @group States
      */
@@ -94,5 +104,23 @@ export class AppState {
 
     execute(code: string) {
         new Function(code)()({ repl: this.repl })
+    }
+
+    openTab(node: ProjectNode) {
+        const opened = this.openTabs$.value
+        if (!opened.includes(node)) {
+            this.openTabs$.next([...opened, node])
+        }
+        this.selectedTab$.next(node)
+    }
+
+    closeTab(node: ProjectNode) {
+        const opened = this.openTabs$.value.filter((v) => v != node)
+        if (opened.length != this.openTabs$.value.length) {
+            this.openTabs$.next(opened)
+        }
+        if (this.selectedTab$.value == node) {
+            this.selectedTab$.next(opened[0])
+        }
     }
 }
