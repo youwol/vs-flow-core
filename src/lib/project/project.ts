@@ -4,6 +4,7 @@ import { Layer, Workflow } from '../workflows'
 import { Modules } from '..'
 import { ApiTrait } from '../modules/traits'
 import { InputMessage } from '../modules'
+import { VirtualDOM } from '@youwol/flux-view'
 
 export type Macro = Workflow & ApiTrait
 
@@ -22,6 +23,10 @@ export class FlowNode {
         Object.assign(this, params)
     }
 }
+
+type TView = (project: ProjectState) => VirtualDOM
+
+type ViewsStore = { [k: string]: TView }
 
 type Uid = string
 

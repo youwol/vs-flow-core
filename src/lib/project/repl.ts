@@ -81,6 +81,13 @@ export class Repl {
         this.project$.next({ project: newProject, delta })
         return { project: newProject, delta }
     }
+
+    addView(params: { viewId; implementation }) {
+        const project = this.project$.value.project
+        const upgrade = project.addView(params)
+        this.project$.next(upgrade)
+        return upgrade
+    }
 }
 
 async function parseElement(
