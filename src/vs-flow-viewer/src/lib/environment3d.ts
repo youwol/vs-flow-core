@@ -16,7 +16,7 @@ import * as THREE from 'three'
 import { ModuleObject3d } from './objects3d/module.object3d'
 import { fitSceneToContent } from './utils'
 import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls'
-import { ReplaySubject } from 'rxjs'
+import { Observable, ReplaySubject } from 'rxjs'
 import { Implementation } from '../../../lib/modules'
 import { ConnectionObject3d } from './objects3d/connection.object3d'
 import { GroupObject3d } from './objects3d/group.object3d'
@@ -114,9 +114,12 @@ export class Dynamic3dContent {
             this.intraConnection,
             this.interConnection,
         ]
-        allElements.flat().forEach((mesh: Object3D) => {
-            container.add(mesh)
-        })
+        allElements
+            .flat()
+            .filter((obj) => obj != undefined)
+            .forEach((mesh: Object3D) => {
+                container.add(mesh)
+            })
     }
 
     private createLights(meshes: Object3D[]): Light[] {
@@ -134,39 +137,8 @@ export class Dynamic3dContent {
             })
             .flat()
     }
-    /*
-    private createGround(meshes: Mesh[]): Object3D[] {
-        if (meshes.length == 0) {
-            return [new GridHelper(10, 10)]
-        }
-        const bbox = getBoundingBox(meshes)
-        const size = new Vector3()
-        bbox.getSize(size)
-        const maxSize = 1.25 * Math.max(size.x, size.y, size.z)
-
-        const center = new Vector3()
-        bbox.getCenter(center)
-
-        const divisions = 100
-        const helper = new GridHelper(maxSize, divisions)
-
-        helper.material['opacity'] = 0.25
-        helper.material['transparent'] = true
-
-        const planeGeometry = new PlaneGeometry(maxSize, maxSize)
-        planeGeometry.rotateX(-Math.PI / 2)
-        const planeMaterial = new ShadowMaterial({
-            color: 0x000000,
-            opacity: 0.2,
-        })
-        const plane = new Mesh(planeGeometry, planeMaterial)
-        plane.receiveShadow = true
-        plane.position.set(center.x, bbox.min.y - 0.2 * size.y, center.z)
-        helper.position.set(center.x, bbox.min.y - 0.2 * size.y, center.z)
-
-        return [plane, helper]
-    }*/
 }
+
 export class LayerOrganizer {
     public readonly project: ProjectState
     public readonly layerId: string
@@ -277,6 +249,7 @@ export class Environment3D {
     public hovered: SelectableMesh
     public readonly uidSelected$: ReplaySubject<string>
 
+    public readonly controls$: Observable<{ controls; camera }>
     constructor(params: {
         htmlElementContainer: HTMLDivElement
         layerId: string
@@ -294,28 +267,35 @@ export class Environment3D {
         })
         const dagData = organizer.dagData()
         this.entitiesPosition = computeCoordinates(dagData)
+        this.scene.background = new THREE.Color(0xaaaaaa)
+        this.scene.fog = new THREE.Fog(0x050505, 2000, 3500)
+        const dynamicContent3d = new Dynamic3dContent({
+            project: this.project,
+            uidSelected$: this.uidSelected$,
+            layerOrganizer: this.layerOrganizer,
+            entitiesPosition: this.entitiesPosition,
+            environment3d: this,
+        })
+        dynamicContent3d.addToScene(this.scene)
+
+        const { clientWidth, clientHeight } = this.htmlElementContainer
+        this.addSelectables(dynamicContent3d)
 
         this.renderer.shadowMap.enabled = true
         this.renderer.setPixelRatio(window.devicePixelRatio)
-        this.renderer.setSize(
-            this.htmlElementContainer.clientWidth,
-            this.htmlElementContainer.clientHeight,
-        )
-        this.htmlElementContainer.appendChild(this.renderer.domElement)
 
         this.labelRenderer.domElement.style.position = 'absolute'
         this.labelRenderer.domElement.style.top = '0px'
         this.labelRenderer.domElement.classList.add('h-100', 'w-100')
-        this.labelRenderer.setSize(
-            this.htmlElementContainer.clientWidth,
-            this.htmlElementContainer.clientHeight,
-        )
+
+        this.renderer.setSize(clientWidth, clientHeight)
+        this.htmlElementContainer.appendChild(this.renderer.domElement)
+        this.labelRenderer.setSize(clientWidth, clientHeight)
         this.htmlElementContainer.appendChild(this.labelRenderer.domElement)
 
         this.camera = new PerspectiveCamera(
             27,
-            this.htmlElementContainer.clientWidth /
-                this.htmlElementContainer.clientHeight,
+            clientWidth / clientHeight,
             1,
             3500,
         )
@@ -325,9 +305,6 @@ export class Environment3D {
             this.camera,
             this.htmlElementContainer,
         )
-
-        this.scene.background = new THREE.Color(0xaaaaaa)
-        this.scene.fog = new THREE.Fog(0x050505, 2000, 3500)
 
         this.htmlElementContainer.onpointermove = (event) => {
             const target = event.target as HTMLDivElement
@@ -343,16 +320,6 @@ export class Environment3D {
                 this.uidSelected$.next(undefined)
             }
         }
-        const dynamicContent3d = new Dynamic3dContent({
-            project: this.project,
-            uidSelected$: this.uidSelected$,
-            layerOrganizer: this.layerOrganizer,
-            entitiesPosition: this.entitiesPosition,
-            environment3d: this,
-        })
-        dynamicContent3d.addToScene(this.scene)
-
-        this.addSelectables(dynamicContent3d)
 
         setTimeout(() => {
             const observer = new window['ResizeObserver'](() => {
