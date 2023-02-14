@@ -1,9 +1,8 @@
 import { DockableTabs } from '@youwol/fv-tabs'
-import { child$, VirtualDOM } from '@youwol/flux-view'
+import { VirtualDOM } from '@youwol/flux-view'
 import { AppState } from '../app.state'
 import { ImmutableTree } from '@youwol/fv-tree'
-import { ProjectState } from '../../../../lib/project'
-import { distinctUntilChanged } from 'rxjs/operators'
+import { ProjectDelta, ProjectState } from '../../../../lib/project'
 
 /**
  * @category View
@@ -42,26 +41,11 @@ export class ProjectView implements VirtualDOM {
     constructor(params: { state: AppState }) {
         Object.assign(this, params)
         this.children = [
-            child$(this.state.repl.project$, (project) => {
-                const rootNode = createRootNode(project)
-                const state = new ImmutableTree.State<NodeProjectBase>({
-                    rootNode,
-                })
-                state.selectedNode$.subscribe((node) => {
-                    node instanceof ModuleInstance &&
-                        this.state.selectedUid$.next(node.id)
-                })
-                this.state.selectedUid$
-                    .pipe(distinctUntilChanged())
-                    .subscribe((uid) => {
-                        state.selectedNode$.next(state.getNode(uid))
-                    })
-                return new ImmutableTree.View({
-                    state,
-                    headerView: (state, node: NodeProjectBase) => {
-                        return new NodeView({ state, node })
-                    },
-                })
+            new ImmutableTree.View({
+                state: this.state.projectExplorerState,
+                headerView: (state, node: NodeProjectBase) => {
+                    return new NodeView({ state, node })
+                },
             }),
         ]
     }
@@ -298,6 +282,62 @@ export function createProjectRootNode(project: ProjectState) {
     })
 }
 
+export function processProjectUpdate({
+    explorerState,
+    project,
+    delta,
+}: {
+    explorerState: ImmutableTree.State<NodeProjectBase>
+    project: ProjectState
+    delta: ProjectDelta
+}) {
+    console.log('New state', {
+        explorer: explorerState,
+        project,
+        delta,
+    })
+    delta.layers.addedElements.forEach((layerId) => {
+        const layer = project.main.rootLayer
+            .flat()
+            .find((l) => l.uid == layerId)
+        const parentLayer = project.main.rootLayer.filter(
+            (l) =>
+                l.children.find((childLayer) => childLayer.uid == layerId) !=
+                undefined,
+        )
+
+        layer.moduleIds.forEach((mid) => {
+            explorerState.removeNode(mid)
+        })
+        explorerState.addChild(
+            parentLayer[0].uid == project.main.rootLayer.uid
+                ? 'main'
+                : layer[0].uid,
+            createLayerNode(layer),
+        )
+    })
+    Array.from(delta.modules.addedElements)
+        .filter((mdlId) => {
+            return explorerState.getNode(mdlId) == undefined
+        })
+        .forEach((mdlUid: string) => {
+            const layer = project.main.rootLayer.filter((l) =>
+                l.moduleIds.includes(mdlUid),
+            )
+            explorerState.addChild(
+                layer[0].uid == project.main.rootLayer.uid
+                    ? 'main'
+                    : layer[0].uid,
+                new ModuleInstance({ id: mdlUid, name: mdlUid }),
+            )
+        })
+
+    Array.from(delta.views.addedElements).forEach((viewId) => {
+        explorerState.addChild('views', new View({ id: viewId, name: viewId }))
+    })
+
+    console.log(explorerState)
+}
 /**
  * @category View
  */
