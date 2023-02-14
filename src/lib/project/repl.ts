@@ -1,4 +1,10 @@
-import { FlowNode, ProjectState } from './project'
+import {
+    computeDelta,
+    FlowNode,
+    identityDelta,
+    ProjectState,
+    UpgradedProject,
+} from './project'
 import { Workflow } from '../workflows'
 import { IEnvironment } from '../environment'
 import { Implementation, InputMessage } from '../modules'
@@ -6,7 +12,7 @@ import { BehaviorSubject, from, Observable } from 'rxjs'
 
 export class Repl {
     public readonly environment: IEnvironment
-    public project$: BehaviorSubject<ProjectState>
+    public project$: BehaviorSubject<UpgradedProject>
 
     constructor(params: { environment: IEnvironment }) {
         Object.assign(this, params)
@@ -15,7 +21,7 @@ export class Repl {
             macros: [],
             environment: this.environment,
         })
-        this.project$ = new BehaviorSubject(project)
+        this.project$ = new BehaviorSubject({ project, delta: identityDelta })
     }
 
     async import(fwdArgs) {
@@ -29,13 +35,13 @@ export class Repl {
             configurations?: { [k: string]: unknown }
         } = {},
     ) {
-        const project = this.project$.value
+        const actualProject = this.project$.value.project
         const sanitizedFlows: string[][] =
             Array.isArray(flows) && !Array.isArray(flows[0])
                 ? ([flows] as string[][])
                 : (flows as string[][])
         const branches = []
-        const modules = [...project.main.modules]
+        const modules = [...actualProject.main.modules]
         for (const flow of sanitizedFlows) {
             const promises = flow.map((elem, i): Promise<FlowNode> => {
                 return parseElement(
@@ -49,9 +55,9 @@ export class Repl {
             const branch = await Promise.all(promises)
             branches.push(branch)
         }
-        const newProject = project.addFlows(branches)
-        this.project$.next(newProject)
-        return { project: newProject }
+        const { project, delta } = actualProject.addFlows(branches)
+        this.project$.next({ project, delta })
+        return { project: project, delta }
     }
 
     __$(
@@ -67,12 +73,13 @@ export class Repl {
     organize(
         data: [{ layerId: string; parentLayerId?: string; uids: string[] }],
     ) {
-        const project = this.project$.value
+        const project = this.project$.value.project
         const newProject = data.reduce((acc, e) => {
-            return project.addLayer(e)
+            return acc.addLayer(e).project
         }, project)
-        this.project$.next(newProject)
-        return { project: newProject }
+        const delta = computeDelta(project, newProject)
+        this.project$.next({ project: newProject, delta })
+        return { project: newProject, delta }
     }
 }
 
