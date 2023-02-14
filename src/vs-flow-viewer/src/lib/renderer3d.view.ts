@@ -22,7 +22,6 @@ export class Renderer3DView {
         uidSelected: ReplaySubject<string>
     }) {
         Object.assign(this, params)
-
         this.entitiesPosition =
             this.project.main.modules.length > 0
                 ? renderDag(this.project, this.project.main.rootLayer)
@@ -32,13 +31,25 @@ export class Renderer3DView {
             {
                 class: 'h-100 w-100',
                 connectedCallback: (htmlElement: HTMLDivElement) => {
-                    this.environment3D = new Environment3D({
-                        htmlElementContainer: htmlElement,
-                        project: this.project,
-                        uidSelected$: params.uidSelected,
-                        layerId: this.project.main.rootLayer.uid,
+                    setTimeout(() => {
+                        const observer = new window['ResizeObserver'](() => {
+                            const { clientWidth, clientHeight } = htmlElement
+                            if (
+                                !this.environment3D &&
+                                clientWidth > 0 &&
+                                clientHeight > 0
+                            ) {
+                                this.environment3D = new Environment3D({
+                                    htmlElementContainer: htmlElement,
+                                    project: this.project,
+                                    uidSelected$: params.uidSelected,
+                                    layerId: this.project.main.rootLayer.uid,
+                                })
+                                animate(this.environment3D)
+                            }
+                        })
+                        observer.observe(htmlElement)
                     })
-                    animate(this.environment3D)
                 },
             },
         ]
