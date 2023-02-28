@@ -251,6 +251,23 @@ test('repl misc 0', async () => {
     expect(connections).toHaveLength(3)
 })
 
+test('multiple steps', async () => {
+    const repl = new Repl({
+        environment: new TestEnvironment({ toolboxes: [toolbox] }),
+    })
+    expect(repl).toBeTruthy()
+    await repl.__([
+        ['timer(t0,{"name":"1s"})', 'filter(f0)', 'map(m0)', 'mergeMap(m1)'],
+    ])
+    await repl.__(['of(of)'])
+    const { project } = await repl.__(['#of', '#m1'])
+    const modules = project.main.modules
+    expect(modules).toHaveLength(5)
+    const connections = project.main.connections
+    expect(connections).toHaveLength(4)
+    expect(project.main.rootLayer.moduleIds).toHaveLength(5)
+})
+
 test('repl misc 1', async () => {
     const repl = new Repl({
         environment: new TestEnvironment({ toolboxes: [toolbox] }),
