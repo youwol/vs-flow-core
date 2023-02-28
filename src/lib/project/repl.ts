@@ -140,7 +140,9 @@ async function parseElement(
         modules.push(instance)
         return new FlowNode({
             module: instance,
-            input: instance.inputSlots[parseInt(input)].slotId,
+            input: isStart
+                ? undefined
+                : instance.inputSlots[parseInt(input)].slotId,
             output: instance.outputSlots[parseInt(output)].slotId,
         })
     }
