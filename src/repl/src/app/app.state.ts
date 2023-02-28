@@ -1,7 +1,8 @@
 import { Projects } from '../../../lib'
 import { Environment } from './environment'
 import { DockableTabs } from '@youwol/fv-tabs'
-import { BehaviorSubject, ReplaySubject } from 'rxjs'
+import { BehaviorSubject, combineLatest, from, ReplaySubject } from 'rxjs'
+import { downloadZip } from 'client-zip'
 import {
     ProjectTab,
     ReplTab,
@@ -15,13 +16,31 @@ import {
     processProjectUpdate,
 } from './side-nav-tabs'
 import { ImmutableTree } from '@youwol/fv-tree'
-import { distinctUntilChanged } from 'rxjs/operators'
+import {
+    debounceTime,
+    distinctUntilChanged,
+    mergeMap,
+    switchMap,
+} from 'rxjs/operators'
+import { HttpModels } from '.'
+import { AssetsGateway } from '@youwol/http-clients'
+import { Common } from '@youwol/fv-code-mirror-editors'
+
 /**
  * @category State
  * @category Entry Point
  */
 export class AppState {
     public readonly repl: Projects.Repl
+    /**
+     * Immutable Constants
+     */
+    public readonly assetId: string
+
+    /**
+     * @group Observable
+     */
+    public readonly cells$ = new BehaviorSubject<Common.IdeState[]>([])
 
     /**
      * @group States
@@ -58,6 +77,47 @@ export class AppState {
         originalReplSource: HttpModels.ReplSource
     }) {
         Object.assign(this, params)
+        const assetsGtwClient = new AssetsGateway.Client()
+        this.cells$.next(
+            params.originalReplSource.cells.map((c) => {
+                return new Common.IdeState({
+                    files: [
+                        {
+                            path: './repl',
+                            content: c.content,
+                        },
+                    ],
+                    defaultFileSystem: Promise.resolve(
+                        new Map<string, string>(),
+                    ),
+                })
+            }),
+        )
+        this.cells$
+            .pipe(
+                switchMap((ideStates) =>
+                    combineLatest(ideStates.map((s) => s.updates$['./repl'])),
+                ),
+                debounceTime(2000),
+                mergeMap((cells) => {
+                    const source = {
+                        name: 'source.json',
+                        lastModified: new Date(),
+                        input: JSON.stringify({ cells }),
+                    }
+                    return from(downloadZip([source]).blob())
+                }),
+                mergeMap((blob) => {
+                    return assetsGtwClient.assets.addZipFiles$({
+                        assetId: this.assetId,
+                        body: { content: blob },
+                    })
+                }),
+            )
+            .subscribe((v) => {
+                console.log('Saved', v)
+            })
+
         this.repl = new Projects.Repl({
             environment: new Environment({ toolboxes: [] }),
         })
@@ -125,5 +185,20 @@ export class AppState {
         if (this.selectedTab$.value == node) {
             this.selectedTab$.next(opened[0])
         }
+    }
+
+    newCell() {
+        const cells = this.cells$.value
+        const ideState = new Common.IdeState({
+            files: [
+                {
+                    path: './repl',
+                    content:
+                        'return async ({repl}) => {\n\tconsole.log("REPL", repl)\n}',
+                },
+            ],
+            defaultFileSystem: Promise.resolve(new Map<string, string>()),
+        })
+        this.cells$.next([...cells, ideState])
     }
 }

@@ -1,6 +1,6 @@
 import { DockableTabs } from '@youwol/fv-tabs'
 import { Common } from '@youwol/fv-code-mirror-editors'
-import { VirtualDOM } from '@youwol/flux-view'
+import { childrenFromStore$, VirtualDOM } from '@youwol/flux-view'
 import { AppState } from '../app.state'
 /**
  * @category View
@@ -13,11 +13,27 @@ export class ReplTab extends DockableTabs.Tab {
             icon: '',
             content: () => {
                 return {
-                    class: 'w-100',
+                    class: 'w-100 p-2 overflow-auto',
                     style: {
                         height: '50vh',
                     },
-                    children: [new ReplView({ state })],
+                    children: [
+                        {
+                            children: childrenFromStore$(
+                                state.cells$,
+                                (ideState) => new ReplView({ state, ideState }),
+                            ),
+                        },
+                        {
+                            class: 'my-3',
+                        },
+                        {
+                            class: 'border rounded fv-bg-secondary fv-hover-xx-lighter fv-pointer p-1 ',
+                            style: { width: 'fit-content' },
+                            innerText: 'New cell',
+                            onclick: () => state.newCell(),
+                        },
+                    ],
                 }
             },
         })
@@ -31,31 +47,26 @@ export class ReplView implements VirtualDOM {
     /**
      * @group States
      */
+    public readonly ideState: Common.IdeState
+
+    /**
+     * @group States
+     */
     public readonly state: AppState
     /**
      * @group Immutable DOM Constants
      */
-    public readonly class = 'w-100 h-100'
+    public readonly class = 'w-100 mb-3'
     /**
      * @group Immutable DOM Constants
      */
     public readonly children: VirtualDOM[]
 
-    constructor(params: { state: AppState }) {
+    constructor(params: { state: AppState; ideState: Common.IdeState }) {
         Object.assign(this, params)
 
-        const ideState = new Common.IdeState({
-            files: [
-                {
-                    path: './repl',
-                    content:
-                        'return async ({repl}) => {\n\tconsole.log("REPL", repl)\n}',
-                },
-            ],
-            defaultFileSystem: Promise.resolve(new Map<string, string>()),
-        })
         const ideView = new Common.CodeEditorView({
-            ideState,
+            ideState: this.ideState,
             path: './repl',
             language: 'javascript',
             config: {
