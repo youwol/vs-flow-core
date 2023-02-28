@@ -1234,6 +1234,13 @@
   dependencies:
     rxjs "^6.5.5"
 
+"@youwol/flux-view@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@youwol/flux-view/-/flux-view-1.1.0.tgz#6bd3a09ea5d6e059936cd734d2434dc52d367f93"
+  integrity sha512-KsNJl/fpWTg26/7E1Lcc/bgOVxhPwwZe5uRV8uXU1G3c427TkXaj3j3VZMhbxLPKdueEC7QO+iE3n1DX2BJ/Dg==
+  dependencies:
+    rxjs "^6.5.5"
+
 "@youwol/fv-code-mirror-editors@^0.2.2":
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/@youwol/fv-code-mirror-editors/-/fv-code-mirror-editors-0.2.2.tgz#9ea615475c4e5986aa6ec8279718a4c319af4cc7"
@@ -1825,6 +1832,11 @@ clean-stack@^4.0.0:
   integrity sha512-LYv6XPxoyODi36Dp976riBtSY27VmFo+MKqEU9QCCWyTrdEPDog+RWA7xQWHi6Vbp61j5c4cdzzX1NidnwtUWg==
   dependencies:
     escape-string-regexp "5.0.0"
+
+client-zip@2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/client-zip/-/client-zip-2.3.0.tgz#c7ae74bc277e466e27134ebcdce4aaade4c3ecd5"
+  integrity sha512-5hJpXzaNx7SEy35QqtdgNh9T3/w2Rjup7n31If5DO+kSgXsTPANmdwO5gRBgAbBn16GVDaGRc7vS2kUMazyXOw==
 
 cliui@^8.0.1:
   version "8.0.1"
