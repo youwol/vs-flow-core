@@ -129,6 +129,10 @@ export class ProjectState {
                 )
         const modulesSet = new Set([...this.main.modules, ...modules])
         const root = this.main.rootLayer
+        const rootModuleIds = new Set([
+            ...root.moduleIds,
+            ...modules.map((m) => m.uid),
+        ])
         const newProject = new ProjectState({
             ...this,
             main: new Workflow({
@@ -137,10 +141,7 @@ export class ProjectState {
                 rootLayer: new Layer({
                     uid: root.uid,
                     children: root.children,
-                    moduleIds: [
-                        ...root.moduleIds,
-                        ...[...modulesSet].map((m) => m.uid),
-                    ],
+                    moduleIds: [...rootModuleIds],
                 }),
             }),
         })
