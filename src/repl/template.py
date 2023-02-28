@@ -11,7 +11,7 @@ pkg_json = parse_json(folder_path / 'package.json')
 
 load_dependencies = {
     "rxjs": "^6.5.5",
-    "@youwol/flux-view": "^1.0.3",
+    "@youwol/flux-view": "^1.1.0",
     "@youwol/cdn-client": "^1.0.2",
     '@youwol/fv-tabs': '^0.2.1',
     '@youwol/os-top-banner': '^0.1.1',
@@ -32,7 +32,8 @@ template = Template(
         runTime=RunTimeDeps(
             externals=load_dependencies,
             includedInBundle={
-                "d3-dag": "0.8.2"
+                "d3-dag": "0.8.2",
+                "client-zip": "2.3.0"
             }
         )
     ),
