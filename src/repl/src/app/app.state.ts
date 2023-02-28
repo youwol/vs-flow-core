@@ -53,7 +53,10 @@ export class AppState {
      */
     public readonly projectExplorerState: ImmutableTree.State<NodeProjectBase>
 
-    constructor(params = {}) {
+    constructor(params: {
+        assetId: string
+        originalReplSource: HttpModels.ReplSource
+    }) {
         Object.assign(this, params)
         this.repl = new Projects.Repl({
             environment: new Environment({ toolboxes: [] }),
