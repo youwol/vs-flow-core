@@ -56,7 +56,6 @@ export function renderDag(project: ProjectState, layer: Layer) {
             ),
         }
     })
-    console.log('DATA', data)
     const dag = dagStratify()(data)
 
     const layout = sugiyama()
