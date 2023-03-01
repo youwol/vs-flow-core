@@ -12,16 +12,24 @@ import { BehaviorSubject, from, Observable } from 'rxjs'
 
 export class Repl {
     public readonly environment: IEnvironment
-    public project$: BehaviorSubject<UpgradedProject>
+    public projectUpgrade$: BehaviorSubject<UpgradedProject>
+    public project$: BehaviorSubject<ProjectState>
 
-    constructor(params: { environment: IEnvironment }) {
+    constructor(params: {
+        environment: IEnvironment
+        project$?: BehaviorSubject<ProjectState>
+    }) {
         Object.assign(this, params)
         const project = new ProjectState({
             main: new Workflow(),
             macros: [],
             environment: this.environment,
         })
-        this.project$ = new BehaviorSubject({ project, delta: identityDelta })
+        this.project$ = params.project$ || new BehaviorSubject(project)
+        this.projectUpgrade$ = new BehaviorSubject({
+            project: this.project$.value,
+            delta: identityDelta,
+        })
     }
 
     async import(fwdArgs) {
@@ -35,7 +43,7 @@ export class Repl {
             configurations?: { [k: string]: unknown }
         } = {},
     ) {
-        const actualProject = this.project$.value.project
+        const actualProject = this.project$.value
         const sanitizedFlows: string[][] =
             Array.isArray(flows) && !Array.isArray(flows[0])
                 ? ([flows] as string[][])
@@ -56,7 +64,8 @@ export class Repl {
             branches.push(branch)
         }
         const { project, delta } = actualProject.addFlows(branches)
-        this.project$.next({ project, delta })
+        this.project$.next(project)
+        this.projectUpgrade$.next({ project, delta })
         return { project: project, delta }
     }
 
@@ -73,19 +82,21 @@ export class Repl {
     organize(
         data: [{ layerId: string; parentLayerId?: string; uids: string[] }],
     ) {
-        const project = this.project$.value.project
+        const project = this.project$.value
         const newProject = data.reduce((acc, e) => {
             return acc.addLayer(e).project
         }, project)
         const delta = computeDelta(project, newProject)
-        this.project$.next({ project: newProject, delta })
+        this.project$.next(newProject)
+        this.projectUpgrade$.next({ project: newProject, delta })
         return { project: newProject, delta }
     }
 
     addView(params: { viewId; implementation }) {
-        const project = this.project$.value.project
+        const project = this.project$.value
         const upgrade = project.addView(params)
-        this.project$.next(upgrade)
+        this.project$.next(upgrade.project)
+        this.projectUpgrade$.next(upgrade)
         return upgrade
     }
 }
