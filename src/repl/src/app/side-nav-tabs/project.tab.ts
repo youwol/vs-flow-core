@@ -291,11 +291,6 @@ export function processProjectUpdate({
     project: ProjectState
     delta: ProjectDelta
 }) {
-    console.log('New state', {
-        explorer: explorerState,
-        project,
-        delta,
-    })
     delta.layers.addedElements.forEach((layerId) => {
         const layer = project.main.rootLayer
             .flat()
