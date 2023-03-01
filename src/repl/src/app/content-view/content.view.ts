@@ -1,7 +1,7 @@
 import {
     attr$,
     children$,
-    childrenWithReplace$,
+    childrenFromStore$,
     VirtualDOM,
 } from '@youwol/flux-view'
 
@@ -11,6 +11,7 @@ import { AppState } from '../app.state'
 import { WorkflowTab } from './workflow.tab'
 import { ProjectState } from '../../../../lib/project'
 import { ViewTab } from './view.view'
+import { ImmutableTree } from '@youwol/fv-tree'
 
 function viewFactory(
     node: ProjectNode,
@@ -46,6 +47,11 @@ export class ContentView implements VirtualDOM {
     public readonly project: ProjectState
 
     /**
+     * @group States
+     */
+    public readonly explorer: ImmutableTree.State<ProjectNode>
+
+    /**
      * @group Immutable DOM constants
      */
     public readonly class =
@@ -56,8 +62,11 @@ export class ContentView implements VirtualDOM {
      */
     public readonly children
 
-    constructor(params: { state: AppState; project: ProjectState }) {
-        console.log('New Content')
+    constructor(params: {
+        state: AppState
+        project: ProjectState
+        explorer: ImmutableTree.State<ProjectNode>
+    }) {
         Object.assign(this, params)
 
         this.children = [
@@ -67,11 +76,12 @@ export class ContentView implements VirtualDOM {
                 style: {
                     minHeight: '0px',
                 },
-                children: childrenWithReplace$(this.state.openTabs$, (node) => {
+                children: childrenFromStore$(this.state.openTabs$, (nodeId) => {
+                    const node = this.explorer.getNode(nodeId)
                     const view = viewFactory(node, this.state, this.project)
                     return {
                         class: attr$(this.state.selectedTab$, (selected) =>
-                            selected == node ? 'w-100 h-100' : 'd-none',
+                            selected == nodeId ? 'w-100 h-100' : 'd-none',
                         ),
                         children: [view],
                     }

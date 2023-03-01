@@ -3,7 +3,7 @@ import { AppState } from './app.state'
 import { TopBannerView } from './top-banner'
 import { DockableTabs } from '@youwol/fv-tabs'
 import { ContentView } from './content-view/content.view'
-import { map } from 'rxjs/operators'
+import { map, withLatestFrom } from 'rxjs/operators'
 /**
  * @category View
  * @Category Entry Point
@@ -93,13 +93,17 @@ export class MainContentView implements VirtualDOM {
                         },
                         children: [
                             child$(
-                                this.state.repl.project$.pipe(
-                                    map(({ project }) => project),
+                                this.state.project$.pipe(
+                                    map((project) => project),
+                                    withLatestFrom(
+                                        this.state.projectExplorerState$,
+                                    ),
                                 ),
-                                (project) =>
+                                ([project, explorer]) =>
                                     new ContentView({
                                         state: this.state,
-                                        project: project,
+                                        project,
+                                        explorer,
                                     }),
                             ),
                         ],

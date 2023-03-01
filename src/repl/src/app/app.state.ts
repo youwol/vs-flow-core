@@ -70,7 +70,9 @@ export class AppState {
      *
      * @group States
      */
-    public readonly projectExplorerState: ImmutableTree.State<NodeProjectBase>
+    public readonly projectExplorerState$: Observable<
+        ImmutableTree.State<NodeProjectBase>
+    >
 
     constructor(params: {
         assetId: string
@@ -121,30 +123,33 @@ export class AppState {
         this.repl = new Projects.Repl({
             environment: new Environment({ toolboxes: [] }),
         })
-        const rootNode = createProjectRootNode(this.repl.project$.value.project)
-        this.projectExplorerState = new ImmutableTree.State<NodeProjectBase>({
-            rootNode,
-        })
-        this.repl.project$.subscribe(({ project, delta }) => {
-            processProjectUpdate({
-                explorerState: this.projectExplorerState,
-                project,
-                delta,
+        this.projectExplorerState$ = this.project$.pipe(
+            filter((p) => p != undefined),
+            map((project) => {
+                const rootNode = createProjectRootNode(project)
+                return new ImmutableTree.State<NodeProjectBase>({
+                    rootNode,
+                })
+            }),
+            shareReplay({ bufferSize: 1, refCount: true }),
+        )
+        this.projectExplorerState$
+            .pipe(switchMap((explorerState) => explorerState.selectedNode$))
+            .subscribe((node) => {
+                node instanceof ModuleInstance &&
+                    this.selectedUid$.next(node.id)
+                if (node instanceof Workflow) {
+                    this.openTab(node.id)
+                }
+                if (node instanceof View) {
+                    this.openTab(node.id)
+                }
             })
-        })
-        this.projectExplorerState.selectedNode$.subscribe((node) => {
-            node instanceof ModuleInstance && this.selectedUid$.next(node.id)
-            if (node instanceof Workflow) {
-                this.openTab(node)
-            }
-            if (node instanceof View) {
-                this.openTab(node)
-            }
-        })
-        this.selectedUid$.pipe(distinctUntilChanged()).subscribe((uid) => {
-            this.projectExplorerState.selectedNode$.next(
-                this.projectExplorerState.getNode(uid),
-            )
+        combineLatest([
+            this.selectedUid$.pipe(distinctUntilChanged()),
+            this.projectExplorerState$,
+        ]).subscribe(([uid, explorer]) => {
+            explorer.selectedNode$.next(explorer.getNode(uid))
         })
 
         this.bottomSideNavState = new DockableTabs.State({

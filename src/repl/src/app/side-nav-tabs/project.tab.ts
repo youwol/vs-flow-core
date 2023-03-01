@@ -1,5 +1,5 @@
 import { DockableTabs } from '@youwol/fv-tabs'
-import { VirtualDOM } from '@youwol/flux-view'
+import { child$, VirtualDOM } from '@youwol/flux-view'
 import { AppState } from '../app.state'
 import { ImmutableTree } from '@youwol/fv-tree'
 import { ProjectDelta, ProjectState } from '../../../../lib/project'
@@ -41,11 +41,13 @@ export class ProjectView implements VirtualDOM {
     constructor(params: { state: AppState }) {
         Object.assign(this, params)
         this.children = [
-            new ImmutableTree.View({
-                state: this.state.projectExplorerState,
-                headerView: (state, node: NodeProjectBase) => {
-                    return new NodeView({ state, node })
-                },
+            child$(this.state.projectExplorerState$, (state) => {
+                return new ImmutableTree.View({
+                    state,
+                    headerView: (state, node: NodeProjectBase) => {
+                        return new NodeView({ state, node })
+                    },
+                })
             }),
         ]
     }
