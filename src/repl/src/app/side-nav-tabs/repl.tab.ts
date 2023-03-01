@@ -1,6 +1,6 @@
 import { DockableTabs } from '@youwol/fv-tabs'
 import { Common } from '@youwol/fv-code-mirror-editors'
-import { childrenFromStore$, VirtualDOM } from '@youwol/flux-view'
+import { attr$, childrenFromStore$, VirtualDOM } from '@youwol/flux-view'
 import { AppState } from '../app.state'
 /**
  * @category View
@@ -62,6 +62,11 @@ export class ReplView implements VirtualDOM {
      */
     public readonly children: VirtualDOM[]
 
+    /**
+     * @group Immutable DOM Constants
+     */
+    onclick: (ev: MouseEvent) => void
+
     constructor(params: { state: AppState; ideState: Common.IdeState }) {
         Object.assign(this, params)
 
@@ -71,12 +76,23 @@ export class ReplView implements VirtualDOM {
             language: 'javascript',
             config: {
                 extraKeys: {
-                    'Ctrl-Enter': (cm) => {
-                        this.state.execute(cm.getValue())
+                    'Ctrl-Enter': () => {
+                        this.state.execute(this.ideState).subscribe()
                     },
                 },
             },
         })
-        this.children = [ideView]
+        this.children = [
+            {
+                style: attr$(this.state.projectByCells$, (hist) => {
+                    return hist.has(this.ideState)
+                        ? { opacity: 1 }
+                        : { opacity: 0.5 }
+                }),
+                class: 'w-100 h-100',
+                children: [ideView],
+            },
+        ]
+        this.onclick = () => this.state.selectCell(this.ideState)
     }
 }

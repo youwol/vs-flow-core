@@ -1,7 +1,14 @@
 import { Projects } from '../../../lib'
 import { Environment } from './environment'
 import { DockableTabs } from '@youwol/fv-tabs'
-import { BehaviorSubject, combineLatest, from, ReplaySubject } from 'rxjs'
+import {
+    BehaviorSubject,
+    combineLatest,
+    from,
+    Observable,
+    of,
+    ReplaySubject,
+} from 'rxjs'
 import { downloadZip } from 'client-zip'
 import {
     ProjectTab,
@@ -13,25 +20,41 @@ import {
     createProjectRootNode,
     Workflow,
     View,
-    processProjectUpdate,
 } from './side-nav-tabs'
 import { ImmutableTree } from '@youwol/fv-tree'
 import {
     debounceTime,
     distinctUntilChanged,
+    filter,
+    map,
     mergeMap,
+    shareReplay,
     switchMap,
+    take,
 } from 'rxjs/operators'
 import { HttpModels } from '.'
 import { AssetsGateway } from '@youwol/http-clients'
 import { Common } from '@youwol/fv-code-mirror-editors'
+import { ProjectState } from '../../../lib/project'
 
+import { Workflow as WfModel } from '../../../lib/workflows'
+
+type ProjectByCells = Map<Common.IdeState, ProjectState>
 /**
  * @category State
  * @category Entry Point
  */
 export class AppState {
+    /**
+     * @group Observable
+     */
+    public readonly project$: BehaviorSubject<ProjectState>
+
+    /**
+     * Immutable Constants
+     */
     public readonly repl: Projects.Repl
+
     /**
      * Immutable Constants
      */
@@ -41,6 +64,19 @@ export class AppState {
      * @group Observable
      */
     public readonly cells$ = new BehaviorSubject<Common.IdeState[]>([])
+
+    /**
+     @group Observable
+     */
+    public readonly projectByCells$ = new BehaviorSubject(
+        new Map<Common.IdeState, ProjectState>(),
+    )
+
+    /**
+     * @group MutableVariable
+     * @private
+     */
+    public lastAvailableProject: ProjectState
 
     /**
      * @group States
@@ -80,9 +116,18 @@ export class AppState {
     }) {
         Object.assign(this, params)
         const assetsGtwClient = new AssetsGateway.Client()
+        const environment = new Environment({ toolboxes: [] })
+        const emptyProject = new ProjectState({
+            main: new WfModel(),
+            macros: [],
+            environment,
+        })
+        this.lastAvailableProject = emptyProject
+        this.project$ = new BehaviorSubject(emptyProject)
+
         this.cells$.next(
-            params.originalReplSource.cells.map((c) => {
-                return new Common.IdeState({
+            params.originalReplSource.cells.map((c, i) => {
+                const cell = new Common.IdeState({
                     files: [
                         {
                             path: './repl',
@@ -93,6 +138,11 @@ export class AppState {
                         new Map<string, string>(),
                     ),
                 })
+                if (i == 0) {
+                    const initialHistory = new Map([[cell, emptyProject]])
+                    this.projectByCells$.next(initialHistory)
+                }
+                return cell
             }),
         )
         this.cells$
@@ -121,7 +171,8 @@ export class AppState {
             })
 
         this.repl = new Projects.Repl({
-            environment: new Environment({ toolboxes: [] }),
+            environment,
+            project$: this.project$,
         })
         this.projectExplorerState$ = this.project$.pipe(
             filter((p) => p != undefined),
@@ -170,8 +221,49 @@ export class AppState {
         })
     }
 
-    execute(code: string) {
-        new Function(code)()({ repl: this.repl })
+    execute(ideState: Common.IdeState): Observable<{
+        history: ProjectByCells
+        project: ProjectState
+    }> {
+        const index = this.cells$.value.indexOf(ideState)
+        return this.projectByCells$.pipe(
+            take(1),
+            mergeMap((history) => {
+                if (!history.has(ideState)) {
+                    const cell = this.cells$.value[index - 1]
+                    return this.execute(cell)
+                }
+                return of(history.get(ideState)).pipe(
+                    map((project) => ({ history, project })),
+                )
+            }),
+            mergeMap(({ project, history }) => {
+                this.project$.next(project)
+                return from(
+                    new Function(ideState.updates$['./repl'].value.content)()({
+                        repl: this.repl,
+                    }),
+                ).pipe(
+                    mergeMap(() => this.project$),
+                    take(1),
+                    map((project) => ({ history, project })),
+                )
+            }),
+            map(({ history, project }) => {
+                this.lastAvailableProject = project
+                if (index == this.cells$.value.length - 1) {
+                    return
+                }
+                const newHistory = new Map()
+                this.cells$.value.slice(0, index + 1).forEach((cell) => {
+                    newHistory.set(cell, history.get(cell))
+                })
+                const next = this.cells$.value[index + 1]
+                newHistory.set(next, project)
+                this.projectByCells$.next(newHistory)
+                return { history: newHistory, project }
+            }),
+        )
     }
 
     openTab(nodeId: string) {
@@ -205,5 +297,12 @@ export class AppState {
             defaultFileSystem: Promise.resolve(new Map<string, string>()),
         })
         this.cells$.next([...cells, ideState])
+    }
+
+    selectCell(ideState: Common.IdeState) {
+        const indexCell = this.cells$.value.indexOf(ideState)
+        const cell = this.cells$.value[indexCell + 1]
+        const state = this.projectByCells$.value.get(cell)
+        state != this.project$.value && this.project$.next(state)
     }
 }
