@@ -59,12 +59,12 @@ export class AppState {
     /**
      * @group Observable
      */
-    public readonly openTabs$ = new BehaviorSubject<ProjectNode[]>([])
+    public readonly openTabs$ = new BehaviorSubject<string[]>([])
 
     /**
      * @group Observables
      */
-    public readonly selectedTab$ = new BehaviorSubject<ProjectNode>(undefined)
+    public readonly selectedTab$ = new BehaviorSubject<string>(undefined)
 
     /**
      *
@@ -174,20 +174,20 @@ export class AppState {
         new Function(code)()({ repl: this.repl })
     }
 
-    openTab(node: ProjectNode) {
+    openTab(nodeId: string) {
         const opened = this.openTabs$.value
-        if (!opened.includes(node)) {
-            this.openTabs$.next([...opened, node])
+        if (!opened.includes(nodeId)) {
+            this.openTabs$.next([...opened, nodeId])
         }
-        this.selectedTab$.next(node)
+        this.selectedTab$.next(nodeId)
     }
 
     closeTab(node: ProjectNode) {
-        const opened = this.openTabs$.value.filter((v) => v != node)
+        const opened = this.openTabs$.value.filter((v) => v != node.id)
         if (opened.length != this.openTabs$.value.length) {
             this.openTabs$.next(opened)
         }
-        if (this.selectedTab$.value == node) {
+        if (this.selectedTab$.value == node.id) {
             this.selectedTab$.next(opened[0])
         }
     }

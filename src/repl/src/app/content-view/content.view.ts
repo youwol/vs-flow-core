@@ -110,12 +110,12 @@ export class FilesHeaderView implements VirtualDOM {
     constructor(params: { appState: AppState }) {
         Object.assign(this, params)
         this.children = children$(this.appState.openTabs$, (tabs) => {
-            return tabs.map((tab) => {
+            return tabs.map((tabId) => {
                 return {
                     class: attr$(
                         this.appState.selectedTab$,
                         (selected): string =>
-                            selected == tab
+                            selected == tabId
                                 ? 'fv-text-focus fv-bg-background'
                                 : 'fv-text-primary fv-bg-background-alt',
                         {
@@ -129,7 +129,7 @@ export class FilesHeaderView implements VirtualDOM {
                         },*/
                         { class: 'mx-1' },
                         {
-                            innerText: `${tab.name}`,
+                            innerText: `${tabId}`,
                         },
                         { class: 'mx-1' },
                         /*{
@@ -141,7 +141,7 @@ export class FilesHeaderView implements VirtualDOM {
                         },*/
                     ],
                     onclick: () => {
-                        this.appState.openTab(tab)
+                        this.appState.openTab(tabId)
                     },
                 }
             })
