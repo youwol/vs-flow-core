@@ -106,8 +106,22 @@ export class Repl {
         const project = this.project$.value
         const module = project.main.modules.find((m) => m.uid == uid)
         const context = new Context('a', {})
-        const config = module.configurationModel.extractWith({ context })
-        return { innerText: JSON.stringify(config) }
+        const config = module.configurationModel.extractWith({
+            values: module.configuration,
+            context,
+        })
+        return {
+            innerText: JSON.stringify(
+                config,
+                (key, val) => {
+                    if (typeof val === 'function') {
+                        return `${val}`
+                    }
+                    return val
+                },
+                4,
+            ),
+        }
     }
 }
 
