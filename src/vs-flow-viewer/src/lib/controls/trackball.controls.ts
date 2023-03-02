@@ -100,7 +100,6 @@ export class TrackballControls extends THREE.EventDispatcher {
         super()
         this.object = object
         this.domElement = domElement !== undefined ? domElement : document
-        console.log('DOMELEMENT', this.domElement)
         this.target0 = this.target.clone()
         this.position0 = this.object.position.clone()
         this.up0 = this.object.up.clone()
