@@ -16,7 +16,6 @@ export class Environment implements IEnvironment {
             view: (data) => {
                 const state = new ObjectJs.State({
                     title: ' ',
-                    expandedNodes: [' _0'],
                     data,
                 })
                 return FluxView.render(new ObjectJs.View({ state }))
