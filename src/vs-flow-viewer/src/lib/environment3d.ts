@@ -15,7 +15,6 @@ import { CSS2DRenderer } from './renderers/css-2d-renderer'
 import * as THREE from 'three'
 import { ModuleObject3d } from './objects3d/module.object3d'
 import { fitSceneToContent } from './utils'
-import { TrackballControls } from 'three/examples/jsm/controls/TrackballControls'
 import { Observable, ReplaySubject } from 'rxjs'
 import { Implementation } from '../../../lib/modules'
 import { ConnectionObject3d } from './objects3d/connection.object3d'
@@ -27,6 +26,7 @@ import { computeCoordinates } from './dag'
 import { GroundObject3d } from './objects3d/ground.object3d'
 import { VirtualDOM, render } from '@youwol/flux-view'
 import { CSS3DObject, CSS3DRenderer } from './renderers/css-3d-renderer'
+import { TrackballControls } from './controls/trackball.controls'
 
 export type SelectableMesh = Mesh & {
     userData: { selectableTrait: SelectableTrait }
@@ -272,7 +272,7 @@ export class Environment3D {
     public readonly htmlRendered3D = new CSS3DRenderer()
 
     public readonly camera: PerspectiveCamera
-    public readonly controls: TrackballControls
+    public readonly controls //: typeof(TrackballControls)
 
     public selectables: SelectableMesh[] = []
     public ground: GroundObject3d
