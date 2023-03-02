@@ -53,7 +53,14 @@ class IntraLayerConnection {
     }
 }
 
+type CustomElement<TObject> = {
+    id: string
+    parentId: string
+    object: (projectState: ProjectState) => TObject
+    wrapper: (obj: Object3D) => void
+}
 export class Dynamic3dContent {
+    static customElements: { [k: string]: CustomElement<VirtualDOM> } = {}
     public readonly environment3d: Environment3D
     public readonly project: ProjectState
     public readonly entitiesPosition: { [k: string]: Vector3 }
@@ -116,12 +123,32 @@ export class Dynamic3dContent {
             this.intraConnection,
             this.interConnection,
         ]
-        allElements
             .flat()
             .filter((obj) => obj != undefined)
-            .forEach((mesh: Object3D) => {
-                container.add(mesh)
+
+        allElements.forEach((mesh: Object3D) => {
+            container.add(mesh)
+            const customElements = Object.values(
+                Dynamic3dContent.customElements,
+            )
+                .map((elem) => ({
+                    ...elem,
+                    parent: container.getObjectByName(elem.parentId),
+                }))
+                .filter((elem) => elem.parent != undefined)
+            customElements.forEach(({ parent, object, wrapper }) => {
+                const view = object(this.project)
+                const object3D =
+                    view instanceof Object3D
+                        ? view
+                        : new CSS3DObject(
+                              render(view) as unknown as HTMLDivElement,
+                          )
+
+                wrapper(object3D)
+                parent.add(object3D)
             })
+        })
     }
 
     private createLights(meshes: Object3D[]): Light[] {
@@ -365,5 +392,9 @@ export class Environment3D {
         this.ground && this.scene.remove(this.ground)
         this.ground = new GroundObject3d({ selectables: this.selectables })
         this.scene.add(this.ground)
+    }
+
+    display(elem: CustomElement<VirtualDOM>) {
+        Dynamic3dContent.customElements[elem.id] = elem
     }
 }
