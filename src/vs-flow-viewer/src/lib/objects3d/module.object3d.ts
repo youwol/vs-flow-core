@@ -47,7 +47,7 @@ export class ModuleObject3d extends Mesh implements SelectableTrait {
         label.layers.set(0)
         this.children = [this.sphere]
         this.sphere.userData.selectableTrait = this
-
+        this.sphere.name = `#${this.module.uid}`
         this.uidSelected$.subscribe((uid) => {
             if (uid != this.module.uid) {
                 this.selected = false
