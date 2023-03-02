@@ -254,11 +254,30 @@ export class ExecutionCell {
         return this.outputs$
     }
 
-    display(element: ((ProjectState) => VirtualDOM) | string) {
-        const convertedElement =
-            typeof element == 'string' ? () => this.repl.info(element) : element
+    display(...args: (((ProjectState) => VirtualDOM) | string)[]) {
+        const convertedElements = args.map((arg) => {
+            if (typeof arg == 'function') {
+                return arg
+            }
+            if (typeof arg == 'string' && arg.length > 0 && arg[0] == '#') {
+                return () => this.repl.info(arg.substring(1))
+            }
+            return () => arg
+        })
+
         this.repl.project$.pipe(take(1)).subscribe((project) => {
-            this.outputs$.next(convertedElement(project))
+            const views = convertedElements
+                .map((elem) => elem(project))
+                .map((elem) =>
+                    typeof elem == 'string' ? stringView(elem) : elem,
+                )
+            this.outputs$.next({
+                class: 'd-flex align-items-center',
+                children: views.map((view) => ({
+                    class: 'pr-2',
+                    children: [view],
+                })),
+            })
         })
     }
 }
