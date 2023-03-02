@@ -1,12 +1,28 @@
 import { Modules, IEnvironment, ToolBox } from '../../../lib'
 import { toolboxes } from '../../../toolboxes'
 import { BehaviorSubject } from 'rxjs'
+import { ObjectJs } from '@youwol/fv-tree'
 import * as FluxView from '@youwol/flux-view'
 
 export class Environment implements IEnvironment {
     public readonly toolboxes$ = new BehaviorSubject<ToolBox[]>([])
 
     public readonly fv = FluxView
+    public readonly viewsFactory = [
+        {
+            name: 'default',
+            description: 'Raw view of data',
+            isCompatible: () => true,
+            view: (data) => {
+                const state = new ObjectJs.State({
+                    title: ' ',
+                    expandedNodes: [' _0'],
+                    data,
+                })
+                return FluxView.render(new ObjectJs.View({ state }))
+            },
+        },
+    ]
 
     constructor(params: { toolboxes: ToolBox[] }) {
         Object.assign(this, params)
