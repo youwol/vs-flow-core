@@ -237,7 +237,7 @@ async function parseElement(
 
 export class ExecutionCell {
     public readonly source: string
-    public readonly outputs$ = new ReplaySubject<VirtualDOM>(1)
+    public readonly outputs$ = new ReplaySubject<VirtualDOM>()
     public readonly repl: Repl
     constructor(params: { source: string; repl: Repl }) {
         Object.assign(this, params)
