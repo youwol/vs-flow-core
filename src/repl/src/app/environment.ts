@@ -1,9 +1,12 @@
 import { Modules, IEnvironment, ToolBox } from '../../../lib'
 import { toolboxes } from '../../../toolboxes'
 import { BehaviorSubject } from 'rxjs'
+import * as FluxView from '@youwol/flux-view'
 
 export class Environment implements IEnvironment {
     public readonly toolboxes$ = new BehaviorSubject<ToolBox[]>([])
+
+    public readonly fv = FluxView
 
     constructor(params: { toolboxes: ToolBox[] }) {
         Object.assign(this, params)
