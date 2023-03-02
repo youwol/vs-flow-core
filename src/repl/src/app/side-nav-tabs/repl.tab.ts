@@ -1,14 +1,10 @@
 import { DockableTabs } from '@youwol/fv-tabs'
 import { Common } from '@youwol/fv-code-mirror-editors'
-import {
-    attr$,
-    childrenFromStore$,
-    childrenAppendOnly$,
-    VirtualDOM,
-} from '@youwol/flux-view'
+import { attr$, childrenFromStore$, VirtualDOM } from '@youwol/flux-view'
 import { AppState } from '../app.state'
-import { map } from 'rxjs/operators'
-import { combineLatest, Observable } from 'rxjs'
+import { map, scan, tap } from 'rxjs/operators'
+import { combineLatest, forkJoin, Observable, ReplaySubject } from 'rxjs'
+import { ExecutionCell } from '../../../../lib/project'
 /**
  * @category View
  */
@@ -62,10 +58,19 @@ export class CellState {
     public readonly appState: AppState
 
     /**
-     *
      * @group Observables
      */
     public readonly isLastCell$: Observable<boolean>
+
+    /**
+     * @group Observables
+     */
+    public readonly output$ = new ReplaySubject<VirtualDOM | false>()
+
+    /**
+     * @group Observables
+     */
+    public readonly outputs$ = new Observable<VirtualDOM[]>()
 
     constructor(params: { appState: AppState; ideState: Common.IdeState }) {
         Object.assign(this, params)
@@ -78,6 +83,25 @@ export class CellState {
                 return projectByCells.has(cells[index + 1])
             }),
         )
+        this.outputs$ = this.output$.pipe(
+            scan((acc, e) => (e ? [...acc, e] : []), []),
+        )
+    }
+
+    execute(): Observable<VirtualDOM> {
+        const executor = new ExecutionCell({
+            source: this.ideState.updates$['./repl'].value.content,
+            repl: this.appState.repl,
+        })
+        const out$ = executor.execute()
+        this.output$.next(false)
+        return forkJoin([
+            out$.pipe(
+                tap((view) => {
+                    this.output$.next(view)
+                }),
+            ),
+        ])
     }
 }
 /**
@@ -93,10 +117,12 @@ export class ReplView implements VirtualDOM {
      * @group States
      */
     public readonly appState: AppState
+
     /**
      * @group Immutable DOM Constants
      */
     public readonly class = 'w-100 mb-3'
+
     /**
      * @group Immutable DOM Constants
      */
@@ -137,9 +163,46 @@ export class ReplView implements VirtualDOM {
                             : 'w-100 h-100',
                     { wrapper: (d) => `${d} w-100 h-100` },
                 ),
-                children: [ideView],
+                children: [
+                    ideView,
+                    new ReplOutput({ cellState: this.cellState }),
+                ],
             },
         ]
         this.onclick = () => this.appState.selectCell(this.cellState)
+    }
+}
+/**
+ * @category View
+ */
+export class ReplOutput {
+    /**
+     * @group States
+     */
+    public readonly cellState: CellState
+    /**
+     * @group Immutable DOM Constants
+     */
+    public readonly class = 'w-100 p-1'
+    /**
+     * @group Immutable DOM Constants
+     */
+    public readonly children: VirtualDOM[]
+
+    constructor(params: { cellState: CellState }) {
+        Object.assign(this, params)
+        this.children = [
+            {
+                tag: 'pre',
+                class: 'w-100 fv-text-primary',
+                style: {
+                    marginBottom: '0px',
+                },
+                children: childrenFromStore$(
+                    this.cellState.outputs$.pipe(map((vDom) => vDom)),
+                    (vDom) => vDom,
+                ),
+            },
+        ]
     }
 }

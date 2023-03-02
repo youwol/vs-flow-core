@@ -4,6 +4,7 @@ import { DockableTabs } from '@youwol/fv-tabs'
 import {
     BehaviorSubject,
     combineLatest,
+    forkJoin,
     from,
     Observable,
     of,
@@ -254,11 +255,7 @@ export class AppState {
             }),
             mergeMap(({ project, history }) => {
                 this.project$.next(project)
-                return from(
-                    new Function(ideState.updates$['./repl'].value.content)()({
-                        repl: this.repl,
-                    }),
-                ).pipe(
+                return forkJoin([cell.execute()]).pipe(
                     mergeMap(() => this.project$),
                     take(1),
                     map((project) => ({ history, project })),
