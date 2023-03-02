@@ -5,9 +5,9 @@ import {
     Vector3,
 } from 'three'
 import { Implementation } from '../../../../lib/modules'
-import { CSS2DObject } from '../renderers/css-2d-renderer'
 import { SelectableTrait } from './traits'
 import { ReplaySubject } from 'rxjs'
+import { CSS3DObject } from '../renderers/css-3d-renderer'
 
 export class ModuleObject3d extends Mesh implements SelectableTrait {
     public readonly module: Implementation
@@ -40,8 +40,9 @@ export class ModuleObject3d extends Mesh implements SelectableTrait {
         labelDiv.className = 'label'
         labelDiv.textContent = this.module.configuration.name as string
         labelDiv.style.marginTop = '-1em'
-        const label = new CSS2DObject(labelDiv)
-        label.position.set(0, 1, 0)
+        labelDiv.style.fontSize = '4px'
+        const label = new CSS3DObject(labelDiv)
+        label.position.set(0, 0, 0)
         this.sphere.add(label)
         label.layers.set(0)
         this.children = [this.sphere]

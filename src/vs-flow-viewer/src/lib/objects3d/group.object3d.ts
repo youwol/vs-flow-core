@@ -8,7 +8,6 @@ import {
     Vector3,
 } from 'three'
 import { Implementation } from '../../../../lib/modules'
-import { CSS2DObject } from '../renderers/css-2d-renderer'
 import { SelectableTrait } from './traits'
 import { ReplaySubject } from 'rxjs'
 import { Layer } from '../../../../lib/workflows'
@@ -20,6 +19,7 @@ import {
     LayerOrganizer,
 } from '../environment3d'
 import { ConnectionObject3d } from './connection.object3d'
+import { CSS3DObject } from '../renderers/css-3d-renderer'
 
 export class GroupObject3d extends Mesh implements SelectableTrait {
     public readonly environment3d: Environment3D
@@ -58,7 +58,8 @@ export class GroupObject3d extends Mesh implements SelectableTrait {
         labelDiv.className = 'label'
         labelDiv.textContent = this.group.uid
         labelDiv.style.marginTop = '-1em'
-        const label = new CSS2DObject(labelDiv)
+        labelDiv.style.fontSize = '8px'
+        const label = new CSS3DObject(labelDiv)
         label.position.set(0, 1, 0)
         this.sphere.add(label)
         label.layers.set(0)
