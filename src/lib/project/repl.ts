@@ -245,6 +245,7 @@ export class ExecutionCell {
         new Function(this.source)()({
             repl: this.repl,
             cell: this,
+            env: this.repl.environment,
         }).then(() => {
             this.outputs$.next({ class: 'fas fa-check fv-text-success' })
             this.outputs$.complete()
