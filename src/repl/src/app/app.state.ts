@@ -305,7 +305,7 @@ export class AppState {
                     {
                         path: './repl',
                         content:
-                            'return async ({repl}) => {\n\tconsole.log("REPL", repl)\n}',
+                            'return async ({repl, cell, env, env3d}) => {\n\tconsole.log("REPL", repl)\n}',
                     },
                 ],
                 defaultFileSystem: Promise.resolve(new Map<string, string>()),
