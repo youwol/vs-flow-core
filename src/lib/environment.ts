@@ -20,6 +20,12 @@ export class ToolBox implements UidTrait {
 
 export interface IEnvironment {
     toolboxes$: BehaviorSubject<ToolBox[]>
+    viewsFactory: {
+        name: string
+        description?: string
+        isCompatible: (data: unknown) => boolean
+        view: (data: unknown) => HTMLElement
+    }[]
 
     instantiateModule<T>({
         typeId,
