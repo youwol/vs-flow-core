@@ -8,7 +8,9 @@ import {
 import { Workflow } from '../workflows'
 import { IEnvironment } from '../environment'
 import { Implementation, InputMessage } from '../modules'
-import { BehaviorSubject, from, Observable } from 'rxjs'
+import { BehaviorSubject, from, Observable, ReplaySubject } from 'rxjs'
+import { VirtualDOM } from '@youwol/flux-view'
+import { Context } from '@youwol/logging'
 
 export class Repl {
     public readonly environment: IEnvironment
@@ -98,6 +100,14 @@ export class Repl {
         this.project$.next(upgrade.project)
         this.projectUpgrade$.next(upgrade)
         return upgrade
+    }
+
+    info(uid: string): VirtualDOM {
+        const project = this.project$.value
+        const module = project.main.modules.find((m) => m.uid == uid)
+        const context = new Context('a', {})
+        const config = module.configurationModel.extractWith({ context })
+        return { innerText: JSON.stringify(config) }
     }
 }
 
