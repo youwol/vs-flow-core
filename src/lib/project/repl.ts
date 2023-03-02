@@ -18,6 +18,7 @@ export class Repl {
     public readonly projectUpgrade$: BehaviorSubject<UpgradedProject>
     public readonly project$: BehaviorSubject<ProjectState>
 
+    public attributes = {}
     constructor(params: {
         environment: IEnvironment
         project$?: BehaviorSubject<ProjectState>
@@ -247,6 +248,7 @@ export class ExecutionCell {
             repl: this.repl,
             cell: this,
             env: this.repl.environment,
+            ...this.repl.attributes,
         }).then(() => {
             this.outputs$.next({ class: 'fas fa-check fv-text-success' })
             this.outputs$.complete()
