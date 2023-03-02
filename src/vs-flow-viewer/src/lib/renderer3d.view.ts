@@ -16,7 +16,7 @@ export class Renderer3DView {
     public readonly entitiesPosition: { [_k: string]: Vector3 }
 
     public environment3D: Environment3D
-
+    public environment3D$: ReplaySubject<Environment3D>
     constructor(params: {
         project: ProjectState
         uidSelected: ReplaySubject<string>
@@ -26,7 +26,7 @@ export class Renderer3DView {
             this.project.main.modules.length > 0
                 ? renderDag(this.project, this.project.main.rootLayer)
                 : {}
-
+        this.environment3D$ = new ReplaySubject<Environment3D>(1)
         this.children = [
             {
                 class: 'h-100 w-100',
@@ -45,6 +45,7 @@ export class Renderer3DView {
                                     uidSelected$: params.uidSelected,
                                     layerId: this.project.main.rootLayer.uid,
                                 })
+                                this.environment3D$.next(this.environment3D)
                                 animate(this.environment3D)
                             }
                         })
