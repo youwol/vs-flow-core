@@ -20,6 +20,7 @@ import {
     createProjectRootNode,
     Workflow,
     View,
+    CellState,
 } from './side-nav-tabs'
 import { ImmutableTree } from '@youwol/fv-tree'
 import {
@@ -39,7 +40,7 @@ import { ProjectState } from '../../../lib/project'
 
 import { Workflow as WfModel } from '../../../lib/workflows'
 
-type ProjectByCells = Map<Common.IdeState, ProjectState>
+type ProjectByCells = Map<CellState, ProjectState>
 /**
  * @category State
  * @category Entry Point
@@ -63,13 +64,13 @@ export class AppState {
     /**
      * @group Observable
      */
-    public readonly cells$ = new BehaviorSubject<Common.IdeState[]>([])
+    public readonly cells$ = new BehaviorSubject<CellState[]>([])
 
     /**
      @group Observable
      */
     public readonly projectByCells$ = new BehaviorSubject(
-        new Map<Common.IdeState, ProjectState>(),
+        new Map<CellState, ProjectState>(),
     )
 
     /**
@@ -127,16 +128,19 @@ export class AppState {
 
         this.cells$.next(
             params.originalReplSource.cells.map((c, i) => {
-                const cell = new Common.IdeState({
-                    files: [
-                        {
-                            path: './repl',
-                            content: c.content,
-                        },
-                    ],
-                    defaultFileSystem: Promise.resolve(
-                        new Map<string, string>(),
-                    ),
+                const cell = new CellState({
+                    appState: this,
+                    ideState: new Common.IdeState({
+                        files: [
+                            {
+                                path: './repl',
+                                content: c.content,
+                            },
+                        ],
+                        defaultFileSystem: Promise.resolve(
+                            new Map<string, string>(),
+                        ),
+                    }),
                 })
                 if (i == 0) {
                     const initialHistory = new Map([[cell, emptyProject]])
@@ -147,8 +151,10 @@ export class AppState {
         )
         this.cells$
             .pipe(
-                switchMap((ideStates) =>
-                    combineLatest(ideStates.map((s) => s.updates$['./repl'])),
+                switchMap((cells) =>
+                    combineLatest(
+                        cells.map((cell) => cell.ideState.updates$['./repl']),
+                    ),
                 ),
                 debounceTime(2000),
                 mergeMap((cells) => {
@@ -221,19 +227,19 @@ export class AppState {
         })
     }
 
-    execute(ideState: Common.IdeState): Observable<{
+    execute(cell: CellState): Observable<{
         history: ProjectByCells
         project: ProjectState
     }> {
-        const index = this.cells$.value.indexOf(ideState)
+        const index = this.cells$.value.indexOf(cell)
         return this.projectByCells$.pipe(
             take(1),
             mergeMap((history) => {
-                if (!history.has(ideState)) {
+                if (!history.has(cell)) {
                     const cell = this.cells$.value[index - 1]
                     return this.execute(cell)
                 }
-                return of(history.get(ideState)).pipe(
+                return of(history.get(cell)).pipe(
                     map((project) => ({ history, project })),
                 )
             }),
@@ -286,23 +292,26 @@ export class AppState {
 
     newCell() {
         const cells = this.cells$.value
-        const ideState = new Common.IdeState({
-            files: [
-                {
-                    path: './repl',
-                    content:
-                        'return async ({repl}) => {\n\tconsole.log("REPL", repl)\n}',
-                },
-            ],
-            defaultFileSystem: Promise.resolve(new Map<string, string>()),
+        const cell = new CellState({
+            appState: this,
+            ideState: new Common.IdeState({
+                files: [
+                    {
+                        path: './repl',
+                        content:
+                            'return async ({repl}) => {\n\tconsole.log("REPL", repl)\n}',
+                    },
+                ],
+                defaultFileSystem: Promise.resolve(new Map<string, string>()),
+            }),
         })
-        this.cells$.next([...cells, ideState])
+        this.cells$.next([...cells, cell])
     }
 
-    selectCell(ideState: Common.IdeState) {
-        const indexCell = this.cells$.value.indexOf(ideState)
-        const cell = this.cells$.value[indexCell + 1]
-        const state = this.projectByCells$.value.get(cell)
+    selectCell(cell: CellState) {
+        const indexCell = this.cells$.value.indexOf(cell)
+        const nextCell = this.cells$.value[indexCell + 1]
+        const state = this.projectByCells$.value.get(nextCell)
         state != this.project$.value && this.project$.next(state)
     }
 }

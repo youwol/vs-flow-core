@@ -1,9 +1,14 @@
 import { DockableTabs } from '@youwol/fv-tabs'
 import { Common } from '@youwol/fv-code-mirror-editors'
-import { attr$, childrenFromStore$, VirtualDOM } from '@youwol/flux-view'
+import {
+    attr$,
+    childrenFromStore$,
+    childrenAppendOnly$,
+    VirtualDOM,
+} from '@youwol/flux-view'
 import { AppState } from '../app.state'
 import { map } from 'rxjs/operators'
-import { combineLatest } from 'rxjs'
+import { combineLatest, Observable } from 'rxjs'
 /**
  * @category View
  */
@@ -23,7 +28,7 @@ export class ReplTab extends DockableTabs.Tab {
                         {
                             children: childrenFromStore$(
                                 state.cells$,
-                                (ideState) => new ReplView({ state, ideState }),
+                                (cellState) => new ReplView({ cellState }),
                             ),
                         },
                         {
@@ -43,9 +48,9 @@ export class ReplTab extends DockableTabs.Tab {
 }
 
 /**
- * @category View
+ * @category State
  */
-export class ReplView implements VirtualDOM {
+export class CellState {
     /**
      * @group States
      */
@@ -54,7 +59,40 @@ export class ReplView implements VirtualDOM {
     /**
      * @group States
      */
-    public readonly state: AppState
+    public readonly appState: AppState
+
+    /**
+     *
+     * @group Observables
+     */
+    public readonly isLastCell$: Observable<boolean>
+
+    constructor(params: { appState: AppState; ideState: Common.IdeState }) {
+        Object.assign(this, params)
+        this.isLastCell$ = combineLatest([
+            this.appState.cells$,
+            this.appState.projectByCells$,
+        ]).pipe(
+            map(([cells, projectByCells]) => {
+                const index = cells.indexOf(this)
+                return projectByCells.has(cells[index + 1])
+            }),
+        )
+    }
+}
+/**
+ * @category View
+ */
+export class ReplView implements VirtualDOM {
+    /**
+     * @group States
+     */
+    public readonly cellState: CellState
+
+    /**
+     * @group States
+     */
+    public readonly appState: AppState
     /**
      * @group Immutable DOM Constants
      */
@@ -69,39 +107,30 @@ export class ReplView implements VirtualDOM {
      */
     onclick: (ev: MouseEvent) => void
 
-    constructor(params: { state: AppState; ideState: Common.IdeState }) {
+    constructor(params: { cellState: CellState }) {
         Object.assign(this, params)
-
+        this.appState = this.cellState.appState
         const ideView = new Common.CodeEditorView({
-            ideState: this.ideState,
+            ideState: this.cellState.ideState,
             path: './repl',
             language: 'javascript',
             config: {
                 extraKeys: {
                     'Ctrl-Enter': () => {
-                        this.state.execute(this.ideState).subscribe()
+                        this.appState.execute(this.cellState).subscribe()
                     },
                 },
             },
         })
-        const isLast$ = combineLatest([
-            this.state.cells$,
-            this.state.projectByCells$,
-        ]).pipe(
-            map(([cells, projectByCells]) => {
-                const index = cells.indexOf(this.ideState)
-                return projectByCells.has(cells[index + 1])
-            }),
-        )
         this.children = [
             {
-                style: attr$(this.state.projectByCells$, (hist) => {
-                    return hist.has(this.ideState)
+                style: attr$(this.appState.projectByCells$, (hist) => {
+                    return hist.has(this.cellState)
                         ? { opacity: 1, borderWidth: '5px' }
                         : { opacity: 0.5 }
                 }),
                 class: attr$(
-                    isLast$,
+                    this.cellState.isLastCell$,
                     (isLast): string =>
                         isLast
                             ? 'fv-border-left-success border-3'
@@ -111,6 +140,6 @@ export class ReplView implements VirtualDOM {
                 children: [ideView],
             },
         ]
-        this.onclick = () => this.state.selectCell(this.ideState)
+        this.onclick = () => this.appState.selectCell(this.cellState)
     }
 }
