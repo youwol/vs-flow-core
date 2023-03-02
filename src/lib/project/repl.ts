@@ -14,8 +14,8 @@ import { Context } from '@youwol/logging'
 
 export class Repl {
     public readonly environment: IEnvironment
-    public projectUpgrade$: BehaviorSubject<UpgradedProject>
-    public project$: BehaviorSubject<ProjectState>
+    public readonly projectUpgrade$: BehaviorSubject<UpgradedProject>
+    public readonly project$: BehaviorSubject<ProjectState>
 
     constructor(params: {
         environment: IEnvironment
