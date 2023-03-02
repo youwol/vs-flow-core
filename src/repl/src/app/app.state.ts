@@ -32,6 +32,7 @@ import {
     shareReplay,
     switchMap,
     take,
+    tap,
 } from 'rxjs/operators'
 import { HttpModels } from '.'
 import { AssetsGateway } from '@youwol/http-clients'
@@ -184,10 +185,18 @@ export class AppState {
             filter((p) => p != undefined),
             map((project) => {
                 const rootNode = createProjectRootNode(project)
-                return new ImmutableTree.State<NodeProjectBase>({
+                return {
+                    explorer: new ImmutableTree.State<NodeProjectBase>({
+                        rootNode,
+                        expandedNodes: [rootNode.id, rootNode.children[0].id],
+                    }),
                     rootNode,
-                })
+                }
             }),
+            tap(({ explorer, rootNode }) => {
+                explorer.selectedNode$.next(rootNode.children[0])
+            }),
+            map(({ explorer }) => explorer),
             shareReplay({ bufferSize: 1, refCount: true }),
         )
         this.projectExplorerState$
