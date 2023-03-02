@@ -11,6 +11,7 @@ import { Implementation, InputMessage } from '../modules'
 import { BehaviorSubject, from, Observable, ReplaySubject } from 'rxjs'
 import { VirtualDOM } from '@youwol/flux-view'
 import { Context } from '@youwol/logging'
+import { take } from 'rxjs/operators'
 
 export class Repl {
     public readonly environment: IEnvironment
@@ -253,8 +254,11 @@ export class ExecutionCell {
         return this.outputs$
     }
 
-    log(element: VirtualDOM | string) {
-        element = typeof element == 'string' ? this.repl.info(element) : element
-        this.outputs$.next(element)
+    display(element: ((ProjectState) => VirtualDOM) | string) {
+        const convertedElement =
+            typeof element == 'string' ? () => this.repl.info(element) : element
+        this.repl.project$.pipe(take(1)).subscribe((project) => {
+            this.outputs$.next(convertedElement(project))
+        })
     }
 }
