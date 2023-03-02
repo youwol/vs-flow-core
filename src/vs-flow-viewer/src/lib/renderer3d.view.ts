@@ -64,7 +64,11 @@ function animate(environment3d: Environment3D) {
 
 function render(environment3d: Environment3D) {
     environment3d.renderer.render(environment3d.scene, environment3d.camera)
-    environment3d.labelRenderer.render(
+    environment3d.htmlRendered2D.render(
+        environment3d.scene,
+        environment3d.camera,
+    )
+    environment3d.htmlRendered3D.render(
         environment3d.scene,
         environment3d.camera,
     )
