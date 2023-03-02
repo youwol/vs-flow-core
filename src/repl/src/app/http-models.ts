@@ -1,5 +1,6 @@
 export interface Cell {
     id: string
+    mode: 'code' | 'markdown'
     content: string
 }
 

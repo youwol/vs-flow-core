@@ -1,10 +1,23 @@
 import { DockableTabs } from '@youwol/fv-tabs'
 import { Common } from '@youwol/fv-code-mirror-editors'
-import { attr$, childrenFromStore$, VirtualDOM } from '@youwol/flux-view'
+import {
+    attr$,
+    child$,
+    childrenFromStore$,
+    VirtualDOM,
+} from '@youwol/flux-view'
 import { AppState } from '../app.state'
-import { map, scan, tap } from 'rxjs/operators'
-import { combineLatest, forkJoin, Observable, ReplaySubject } from 'rxjs'
+import { map, scan, tap, withLatestFrom } from 'rxjs/operators'
+import {
+    BehaviorSubject,
+    combineLatest,
+    EMPTY,
+    forkJoin,
+    Observable,
+    ReplaySubject,
+} from 'rxjs'
 import { ExecutionCell } from '../../../../lib/project'
+
 /**
  * @category View
  */
@@ -25,7 +38,11 @@ export class ReplTab extends DockableTabs.Tab {
                             class: 'h-100 w-75 mx-auto',
                             children: childrenFromStore$(
                                 state.cells$,
-                                (cellState) => new ReplView({ cellState }),
+                                (cellState) => {
+                                    return cellState.mode == 'code'
+                                        ? new CellCodeView({ cellState })
+                                        : new CellMarkdownView({ cellState })
+                                },
                                 {
                                     orderOperator: (a, b) =>
                                         state.cells$.value.indexOf(a) -
@@ -40,10 +57,38 @@ export class ReplTab extends DockableTabs.Tab {
     }
 }
 
+export interface CellTrait {
+    mode: 'code' | 'markdown'
+
+    execute: () => Observable<VirtualDOM>
+
+    ideState: Common.IdeState
+}
+
+export function factoryCellState(
+    mode: 'markdown' | 'code',
+    appState: AppState,
+    content: string,
+) {
+    return mode == 'markdown'
+        ? new CellMarkdownState({
+              appState,
+              content,
+          })
+        : new CellCodeState({
+              appState,
+              content,
+          })
+}
 /**
  * @category State
  */
-export class CellState {
+export class CellCodeState implements CellTrait {
+    /**
+     * @group ImmutableConstant
+     */
+    public readonly mode = 'code'
+
     /**
      * @group States
      */
@@ -69,8 +114,17 @@ export class CellState {
      */
     public readonly outputs$ = new Observable<VirtualDOM[]>()
 
-    constructor(params: { appState: AppState; ideState: Common.IdeState }) {
+    constructor(params: { appState: AppState; content: string }) {
         Object.assign(this, params)
+        this.ideState = new Common.IdeState({
+            files: [
+                {
+                    path: './repl',
+                    content: params.content,
+                },
+            ],
+            defaultFileSystem: Promise.resolve(new Map<string, string>()),
+        })
         this.isLastCell$ = combineLatest([
             this.appState.cells$,
             this.appState.projectByCells$,
@@ -101,14 +155,52 @@ export class CellState {
         ])
     }
 }
+
 /**
- * @category View
+ * @category State
  */
-export class ReplView implements VirtualDOM {
+export class CellMarkdownState implements CellTrait {
+    /**
+     * @group ImmutableConstant
+     */
+    public readonly mode = 'markdown'
+
     /**
      * @group States
      */
-    public readonly cellState: CellState
+    public readonly ideState: Common.IdeState
+
+    /**
+     * @group States
+     */
+    public readonly appState: AppState
+
+    constructor(params: { appState: AppState; content: string }) {
+        Object.assign(this, params)
+        this.ideState = new Common.IdeState({
+            files: [
+                {
+                    path: './repl',
+                    content: params.content,
+                },
+            ],
+            defaultFileSystem: Promise.resolve(new Map<string, string>()),
+        })
+    }
+
+    execute(): Observable<VirtualDOM> {
+        return EMPTY
+    }
+}
+
+/**
+ * @category View
+ */
+export class CellCodeView implements VirtualDOM {
+    /**
+     * @group States
+     */
+    public readonly cellState: CellCodeState
 
     /**
      * @group States
@@ -130,7 +222,7 @@ export class ReplView implements VirtualDOM {
      */
     onclick: (ev: MouseEvent) => void
 
-    constructor(params: { cellState: CellState }) {
+    constructor(params: { cellState: CellTrait }) {
         Object.assign(this, params)
         this.appState = this.cellState.appState
         const ideView = new Common.CodeEditorView({
@@ -173,6 +265,85 @@ export class ReplView implements VirtualDOM {
         this.onclick = () => this.appState.selectCell(this.cellState)
     }
 }
+
+/**
+ * @category View
+ */
+export class CellMarkdownView implements VirtualDOM {
+    /**
+     * @group Observables
+     */
+    public readonly editionMode$: BehaviorSubject<'view' | 'edit'> =
+        new BehaviorSubject('view')
+    /**
+     * @group States
+     */
+    public readonly cellState: CellMarkdownState
+
+    /**
+     * @group States
+     */
+    public readonly appState: AppState
+
+    /**
+     * @group Immutable DOM Constants
+     */
+    public readonly class = 'w-100 mb-3'
+
+    /**
+     * @group Immutable DOM Constants
+     */
+    public readonly children: VirtualDOM[]
+
+    /**
+     * @group Immutable DOM Constants
+     */
+    onclick: (ev: MouseEvent) => void
+
+    constructor(params: { cellState: CellTrait }) {
+        Object.assign(this, params)
+        this.appState = this.cellState.appState
+        const ideView = new Common.CodeEditorView({
+            ideState: this.cellState.ideState,
+            path: './repl',
+            language: 'markdown',
+            config: {
+                extraKeys: {
+                    'Ctrl-Enter': () => {
+                        this.editionMode$.next('view')
+                    },
+                },
+            },
+        })
+        this.children = [
+            new ReplTopMenuView({
+                cellState: this.cellState,
+                appState: this.appState,
+            }),
+            child$(
+                this.editionMode$.pipe(
+                    withLatestFrom(
+                        params.cellState.ideState.updates$['./repl'],
+                    ),
+                ),
+                ([mode, file]) => {
+                    return mode == 'edit'
+                        ? {
+                              children: [ideView],
+                          }
+                        : {
+                              innerHTML: window['marked'].parse(file.content),
+                              ondblclick: () => {
+                                  this.editionMode$.next('edit')
+                              },
+                          }
+                },
+            ),
+        ]
+        this.onclick = () => this.appState.selectCell(this.cellState)
+    }
+}
+
 /**
  * @category View
  */
@@ -180,7 +351,7 @@ export class ReplOutput {
     /**
      * @group States
      */
-    public readonly cellState: CellState
+    public readonly cellState: CellCodeState
     /**
      * @group Immutable DOM Constants
      */
@@ -190,7 +361,7 @@ export class ReplOutput {
      */
     public readonly children: VirtualDOM[]
 
-    constructor(params: { cellState: CellState }) {
+    constructor(params: { cellState: CellCodeState }) {
         Object.assign(this, params)
         this.children = [
             {
@@ -219,23 +390,46 @@ export class ReplTopMenuView {
     /**
      * @group States
      */
-    public readonly cellState: CellState
+    public readonly cellState: CellTrait
 
     /**
      * @group Immutable DOM Constants
      */
-    public readonly class =
-        'w-100 d-flex align-items-center justify-content-end'
+    public readonly class = 'w-100 d-flex align-items-center'
     /**
      * @group Immutable DOM Constants
      */
     public readonly children: VirtualDOM[]
 
-    constructor(params: { cellState: CellState; appState: AppState }) {
+    constructor(params: { cellState: CellTrait; appState: AppState }) {
         Object.assign(this, params)
         const classIcon =
             'd-flex align-items-center rounded p-1 fv-hover-bg-background-alt fv-pointer'
         this.children = [
+            {
+                tag: 'select',
+                children: [
+                    {
+                        tag: 'option',
+                        innerText: 'code',
+                        value: 'code',
+                        selected: this.cellState.mode == 'code',
+                    },
+                    {
+                        tag: 'option',
+                        innerText: 'markdown',
+                        value: 'markdown',
+                        selected: this.cellState.mode == 'markdown',
+                    },
+                ],
+                onchange: (ev) => {
+                    this.appState.changeCellMode(
+                        this.cellState,
+                        ev.target.value,
+                    )
+                },
+            },
+            { class: 'flex-grow-1' },
             {
                 class: classIcon,
                 children: [

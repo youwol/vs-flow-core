@@ -21,7 +21,9 @@ import {
     createProjectRootNode,
     Workflow,
     View,
-    CellState,
+    CellCodeState,
+    CellTrait,
+    factoryCellState,
 } from './side-nav-tabs'
 import { ImmutableTree } from '@youwol/fv-tree'
 import {
@@ -37,12 +39,11 @@ import {
 } from 'rxjs/operators'
 import { HttpModels } from '.'
 import { AssetsGateway } from '@youwol/http-clients'
-import { Common } from '@youwol/fv-code-mirror-editors'
 import { ProjectState } from '../../../lib/project'
 
 import { Workflow as WfModel } from '../../../lib/workflows'
 
-type ProjectByCells = Map<CellState, ProjectState>
+type ProjectByCells = Map<CellTrait, ProjectState>
 /**
  * @category State
  * @category Entry Point
@@ -66,13 +67,13 @@ export class AppState {
     /**
      * @group Observable
      */
-    public readonly cells$ = new BehaviorSubject<CellState[]>([])
+    public readonly cells$ = new BehaviorSubject<CellTrait[]>([])
 
     /**
      @group Observable
      */
     public readonly projectByCells$ = new BehaviorSubject(
-        new Map<CellState, ProjectState>(),
+        new Map<CellTrait, ProjectState>(),
     )
 
     /**
@@ -127,35 +128,38 @@ export class AppState {
         })
         this.lastAvailableProject = emptyProject
         this.project$ = new BehaviorSubject(emptyProject)
-
+        let prev = undefined
+        const history = new Map()
         this.cells$.next(
             params.originalReplSource.cells.map((c, i) => {
-                const cell = new CellState({
-                    appState: this,
-                    ideState: new Common.IdeState({
-                        files: [
-                            {
-                                path: './repl',
-                                content: c.content,
-                            },
-                        ],
-                        defaultFileSystem: Promise.resolve(
-                            new Map<string, string>(),
-                        ),
-                    }),
-                })
+                const cell = factoryCellState(c.mode, this, c.content)
                 if (i == 0) {
-                    const initialHistory = new Map([[cell, emptyProject]])
-                    this.projectByCells$.next(initialHistory)
+                    history.set(cell, emptyProject)
+                }
+                if (i > 0 && prev && history.get(prev)) {
+                    history.set(cell, history.get(prev))
+                }
+                if (c.mode == 'markdown') {
+                    prev = cell
+                } else {
+                    prev = undefined
                 }
                 return cell
             }),
         )
+        this.projectByCells$.next(history)
         this.cells$
             .pipe(
                 switchMap((cells) =>
                     combineLatest(
-                        cells.map((cell) => cell.ideState.updates$['./repl']),
+                        cells.map((cell) =>
+                            cell.ideState.updates$['./repl'].pipe(
+                                map((file) => ({
+                                    mode: cell.mode,
+                                    content: file.content,
+                                })),
+                            ),
+                        ),
                     ),
                 ),
                 debounceTime(2000),
@@ -237,7 +241,7 @@ export class AppState {
         })
     }
 
-    execute(cell: CellState): Observable<{
+    execute(cell: CellTrait): Observable<{
         history: ProjectByCells
         project: ProjectState
     }> {
@@ -296,20 +300,12 @@ export class AppState {
         }
     }
 
-    newCell(cellRef: CellState, where: 'after' | 'before') {
+    newCell(cellRef: CellTrait, where: 'after' | 'before') {
         const cells = this.cells$.value
-        const newCell = new CellState({
+        const newCell = new CellCodeState({
             appState: this,
-            ideState: new Common.IdeState({
-                files: [
-                    {
-                        path: './repl',
-                        content:
-                            'return async ({repl, cell, env, env3d}) => {\n\tconsole.log("REPL", repl)\n}',
-                    },
-                ],
-                defaultFileSystem: Promise.resolve(new Map<string, string>()),
-            }),
+            content:
+                'return async ({repl, cell, env, env3d}) => {\n\tconsole.log("REPL", repl)\n}',
         })
         const indexInsert =
             where == 'after'
@@ -324,7 +320,7 @@ export class AppState {
         this.cells$.next(newCells)
     }
 
-    deleteCell(cell?: CellState) {
+    deleteCell(cell?: CellTrait) {
         const cells = this.cells$.value
         const newCells = cells.filter((c) => c != cell)
 
@@ -337,10 +333,27 @@ export class AppState {
         }
     }
 
-    selectCell(cell: CellState) {
+    selectCell(cell: CellTrait) {
         const indexCell = this.cells$.value.indexOf(cell)
         const nextCell = this.cells$.value[indexCell + 1]
         const state = this.projectByCells$.value.get(nextCell)
         state != this.project$.value && this.project$.next(state)
+    }
+
+    changeCellMode(cell: CellTrait, mode: 'code' | 'markdown') {
+        const newCell = factoryCellState(
+            mode,
+            this,
+            cell.ideState.updates$['./repl'].value.content,
+        )
+        const newCells = this.cells$.value.map((c) => (c == cell ? newCell : c))
+        this.cells$.next(newCells)
+        const projectByCells = this.projectByCells$.value
+        if (projectByCells.has(cell)) {
+            const newMaps = new Map(this.projectByCells$.value)
+            newMaps.set(newCell, newMaps.get(cell))
+            newMaps.delete(cell)
+            this.projectByCells$.next(newMaps)
+        }
     }
 }

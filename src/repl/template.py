@@ -18,7 +18,8 @@ load_dependencies = {
     '@youwol/fv-code-mirror-editors': '^0.2.2',
     '@youwol/fv-tree': '^0.2.3',
     "three-trackballcontrols": "^0.0.8",
-    "three": '^0.128.0'
+    "three": '^0.128.0',
+    "marked": "^4.2.3"
 }
 
 template = Template(
