@@ -25,6 +25,8 @@ import { PseudoConnectionObject3d } from './objects3d/pseudo-connection.object3d
 import { Connection } from '../../../lib/connections'
 import { computeCoordinates } from './dag'
 import { GroundObject3d } from './objects3d/ground.object3d'
+import { VirtualDOM, render } from '@youwol/flux-view'
+import { CSS3DObject, CSS3DRenderer } from './renderers/css-3d-renderer'
 
 export type SelectableMesh = Mesh & {
     userData: { selectableTrait: SelectableTrait }
@@ -239,7 +241,8 @@ export class Environment3D {
     public readonly scene = new Scene()
     public readonly pointer = new Vector2()
     public readonly renderer = new WebGLRenderer({ antialias: true })
-    public readonly labelRenderer = new CSS2DRenderer()
+    public readonly htmlRendered2D = new CSS2DRenderer()
+    public readonly htmlRendered3D = new CSS3DRenderer()
 
     public readonly camera: PerspectiveCamera
     public readonly controls: TrackballControls
@@ -284,14 +287,20 @@ export class Environment3D {
         this.renderer.shadowMap.enabled = true
         this.renderer.setPixelRatio(window.devicePixelRatio)
 
-        this.labelRenderer.domElement.style.position = 'absolute'
-        this.labelRenderer.domElement.style.top = '0px'
-        this.labelRenderer.domElement.classList.add('h-100', 'w-100')
+        this.htmlRendered2D.domElement.style.position = 'absolute'
+        this.htmlRendered2D.domElement.style.top = '0px'
+        this.htmlRendered2D.domElement.classList.add('h-100', 'w-100')
+
+        this.htmlRendered3D.domElement.style.position = 'absolute'
+        this.htmlRendered3D.domElement.style.top = '0px'
+        this.htmlRendered3D.domElement.classList.add('h-100', 'w-100')
 
         this.renderer.setSize(clientWidth, clientHeight)
         this.htmlElementContainer.appendChild(this.renderer.domElement)
-        this.labelRenderer.setSize(clientWidth, clientHeight)
-        this.htmlElementContainer.appendChild(this.labelRenderer.domElement)
+        this.htmlRendered2D.setSize(clientWidth, clientHeight)
+        this.htmlRendered3D.setSize(clientWidth, clientHeight)
+        this.htmlElementContainer.appendChild(this.htmlRendered2D.domElement)
+        this.htmlElementContainer.appendChild(this.htmlRendered3D.domElement)
 
         this.camera = new PerspectiveCamera(
             27,
@@ -328,7 +337,11 @@ export class Environment3D {
                     this.htmlElementContainer.clientHeight,
                 )
 
-                this.labelRenderer.setSize(
+                this.htmlRendered2D.setSize(
+                    this.htmlElementContainer.clientWidth,
+                    this.htmlElementContainer.clientHeight,
+                )
+                this.htmlRendered3D.setSize(
                     this.htmlElementContainer.clientWidth,
                     this.htmlElementContainer.clientHeight,
                 )
