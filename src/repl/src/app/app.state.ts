@@ -296,9 +296,9 @@ export class AppState {
         }
     }
 
-    newCell() {
+    newCell(cellRef: CellState, where: 'after' | 'before') {
         const cells = this.cells$.value
-        const cell = new CellState({
+        const newCell = new CellState({
             appState: this,
             ideState: new Common.IdeState({
                 files: [
@@ -311,7 +311,30 @@ export class AppState {
                 defaultFileSystem: Promise.resolve(new Map<string, string>()),
             }),
         })
-        this.cells$.next([...cells, cell])
+        const indexInsert =
+            where == 'after'
+                ? cells.indexOf(cellRef)
+                : cells.indexOf(cellRef) + 1
+        const newCells = [...cells]
+        newCells.splice(indexInsert, 0, newCell)
+        const newMaps = new Map(this.projectByCells$.value)
+        newMaps.set(newCell, newMaps.get(cells[indexInsert]))
+        newMaps.delete(cells[indexInsert])
+        this.projectByCells$.next(newMaps)
+        this.cells$.next(newCells)
+    }
+
+    deleteCell(cell?: CellState) {
+        const cells = this.cells$.value
+        const newCells = cells.filter((c) => c != cell)
+
+        this.cells$.next(newCells)
+        const projectByCells = this.projectByCells$.value
+        if (projectByCells.has(cell)) {
+            const newMaps = new Map(this.projectByCells$.value)
+            newMaps.delete(cell)
+            this.projectByCells$.next(newMaps)
+        }
     }
 
     selectCell(cell: CellState) {

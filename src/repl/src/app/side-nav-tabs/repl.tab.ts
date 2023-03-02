@@ -25,16 +25,12 @@ export class ReplTab extends DockableTabs.Tab {
                             children: childrenFromStore$(
                                 state.cells$,
                                 (cellState) => new ReplView({ cellState }),
+                                {
+                                    orderOperator: (a, b) =>
+                                        state.cells$.value.indexOf(a) -
+                                        state.cells$.value.indexOf(b),
+                                },
                             ),
-                        },
-                        {
-                            class: 'my-3',
-                        },
-                        {
-                            class: 'border rounded fv-bg-secondary fv-hover-xx-lighter fv-pointer p-1 ',
-                            style: { width: 'fit-content' },
-                            innerText: 'New cell',
-                            onclick: () => state.newCell(),
                         },
                     ],
                 }
@@ -149,6 +145,10 @@ export class ReplView implements VirtualDOM {
             },
         })
         this.children = [
+            new ReplTopMenuView({
+                cellState: this.cellState,
+                appState: this.appState,
+            }),
             {
                 style: attr$(this.appState.projectByCells$, (hist) => {
                     return hist.has(this.cellState)
@@ -202,6 +202,73 @@ export class ReplOutput {
                     this.cellState.outputs$.pipe(map((vDom) => vDom)),
                     (vDom) => vDom,
                 ),
+            },
+        ]
+    }
+}
+/**
+ * @category View
+ */
+export class ReplTopMenuView {
+    /**
+     * @group States
+     */
+    public readonly appState: AppState
+
+    /**
+     * @group States
+     */
+    public readonly cellState: CellState
+
+    /**
+     * @group Immutable DOM Constants
+     */
+    public readonly class =
+        'w-100 d-flex align-items-center justify-content-end'
+    /**
+     * @group Immutable DOM Constants
+     */
+    public readonly children: VirtualDOM[]
+
+    constructor(params: { cellState: CellState; appState: AppState }) {
+        Object.assign(this, params)
+        const classIcon =
+            'd-flex align-items-center rounded p-1 fv-hover-bg-background-alt fv-pointer'
+        this.children = [
+            {
+                class: classIcon,
+                children: [
+                    {
+                        class: 'fas fa-plus',
+                    },
+                    {
+                        class: 'fas fa-chevron-down',
+                    },
+                ],
+                onclick: () => this.appState.newCell(this.cellState, 'before'),
+            },
+            { class: 'mx-2' },
+            {
+                class: classIcon,
+                children: [
+                    {
+                        class: 'fas fa-plus',
+                    },
+                    {
+                        class: 'fas fa-chevron-up',
+                    },
+                ],
+                onclick: () => this.appState.newCell(this.cellState, 'after'),
+            },
+            { class: 'mx-2' },
+            {
+                class: classIcon,
+                children: [
+                    {
+                        class: 'fas fa-trash',
+                    },
+                ],
+                onclick: () => this.appState.deleteCell(this.cellState),
             },
         ]
     }
