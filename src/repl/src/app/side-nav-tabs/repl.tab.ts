@@ -16,12 +16,13 @@ export class ReplTab extends DockableTabs.Tab {
             icon: '',
             content: () => {
                 return {
-                    class: 'w-100 p-2 overflow-auto',
+                    class: 'w-100 p-2 overflow-auto mx-auto',
                     style: {
                         height: '50vh',
                     },
                     children: [
                         {
+                            class: 'h-100 w-75 mx-auto',
                             children: childrenFromStore$(
                                 state.cells$,
                                 (cellState) => new ReplView({ cellState }),
