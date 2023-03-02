@@ -280,4 +280,39 @@ export class ExecutionCell {
             })
         })
     }
+
+    log(...args: (((ProjectState) => VirtualDOM) | unknown)[]) {
+        const convertedElements = args.map((arg) => {
+            if (typeof arg == 'function') {
+                return arg
+            }
+            if (typeof arg == 'string' && arg.length > 0 && arg[0] == '#') {
+                return (p) =>
+                    p.main.modules.find((m) => m.uid == arg.substring(1))
+            }
+            return () => arg
+        })
+        this.repl.project$.pipe(take(1)).subscribe((project) => {
+            const allViews = convertedElements
+                .map((elem) => {
+                    const data = elem(project)
+                    return typeof data == 'string'
+                        ? stringView(data)
+                        : this.repl.environment.viewsFactory
+                              .filter((view) => view.isCompatible(data))
+                              .map((fact) => fact.view(data))
+                })
+                .flat()
+            from(allViews).subscribe((view) => {
+                this.outputs$.next(view)
+            })
+        })
+    }
+}
+
+function stringView(data: string | boolean | number) {
+    return {
+        class: 'fv-text-focus',
+        innerHTML: `<b>${data}</b>`,
+    }
 }
