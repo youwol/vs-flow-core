@@ -219,3 +219,27 @@ async function parseElement(
         adaptor: adaptor && options.adaptors[adaptor],
     })
 }
+
+export class ExecutionCell {
+    public readonly source: string
+    public readonly outputs$ = new ReplaySubject<VirtualDOM>(1)
+    public readonly repl: Repl
+    constructor(params: { source: string; repl: Repl }) {
+        Object.assign(this, params)
+    }
+    execute() {
+        new Function(this.source)()({
+            repl: this.repl,
+            cell: this,
+        }).then(() => {
+            this.outputs$.next({ class: 'fas fa-check fv-text-success' })
+            this.outputs$.complete()
+        })
+        return this.outputs$
+    }
+
+    log(element: VirtualDOM | string) {
+        element = typeof element == 'string' ? this.repl.info(element) : element
+        this.outputs$.next(element)
+    }
+}
