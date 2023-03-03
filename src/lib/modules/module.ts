@@ -16,12 +16,16 @@ import {
 } from './traits'
 import { Context, LogChannel } from '@youwol/logging'
 import { IEnvironment } from '../environment'
+import { VirtualDOM } from '@youwol/flux-view'
 export * as IOs from './IOs'
 
 export type Implementation<TSchema extends Schema = Schema> = ApiTrait &
     ConfigurableTrait<TSchema> &
     UidTrait &
-    JournalTrait
+    JournalTrait & {
+        environment: IEnvironment
+        builderView?: (Implementation) => VirtualDOM
+    }
 
 export function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
@@ -95,6 +99,7 @@ export type ForwardArgs = {
     uid?: string
     configuration?: { [_k: string]: unknown }
     logsChannels?: LogChannel[]
+    environment: IEnvironment
 }
 
 type TDefaultImplementation<TSchema extends Schema> = Implementation<TSchema> &
@@ -104,6 +109,7 @@ export class DefaultImplementation<TSchema extends Schema = Schema>
     implements TDefaultImplementation<TSchema>
 {
     public readonly uid: string = uuidv4()
+    public readonly environment: IEnvironment
     public readonly configurationModel: Configurations.Configuration<TSchema>
     public readonly configuration: JsonMap
     public readonly inputs: { [k: string]: IOs.Input }
