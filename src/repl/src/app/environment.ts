@@ -52,7 +52,7 @@ export class Environment implements IEnvironment {
                     return module.declaration.typeId == typeId
                 })
         return (await module.getInstance({
-            fwdParams: { uid: moduleId, configuration },
+            fwdParams: { uid: moduleId, configuration, environment: this },
             environment: this,
         })) as T & Modules.Implementation
     }
