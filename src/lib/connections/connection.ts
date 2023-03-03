@@ -4,11 +4,12 @@ import {
     ConfigurableTrait,
     ExecutionJournal,
     JournalTrait,
+    StatusTrait,
     UidTrait,
 } from '../modules/traits'
 import { map } from 'rxjs/operators'
 import { Configurations, InputMessage } from '../modules'
-import { Subscription } from 'rxjs'
+import { BehaviorSubject, Subscription } from 'rxjs'
 
 type AnyJson = boolean | number | string | null | JsonArray | JsonMap
 export interface JsonMap {
@@ -31,7 +32,11 @@ type TSchema = {
 }
 
 export class Connection
-    implements UidTrait, ConfigurableTrait<TSchema>, JournalTrait
+    implements
+        UidTrait,
+        ConfigurableTrait<TSchema>,
+        JournalTrait,
+        StatusTrait<{ connected: boolean }>
 {
     public readonly start: Slot
     public readonly end: Slot
@@ -54,6 +59,10 @@ export class Connection
     public readonly journal: ExecutionJournal
 
     private subscription: Subscription
+
+    public readonly status$ = new BehaviorSubject<{ connected: boolean }>({
+        connected: true,
+    })
 
     constructor({
         start,
@@ -102,9 +111,18 @@ export class Connection
                     return adapted
                 }),
             )
-            .subscribe((adaptedMessage: InputMessage<unknown>) => {
-                endSlot.subject.next(adaptedMessage)
-            })
+            .subscribe(
+                (adaptedMessage: InputMessage<unknown>) => {
+                    endSlot.subject.next(adaptedMessage)
+                },
+                (_error) => {
+                    /*no op for now*/
+                },
+                () => {
+                    endSlot.subject.complete()
+                    this.status$.next({ connected: false })
+                },
+            )
     }
 
     isConnected() {
