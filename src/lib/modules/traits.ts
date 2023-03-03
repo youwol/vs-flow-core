@@ -155,3 +155,7 @@ export interface RenderingTrait {
 export interface PluginTrait {
     parentModuleId: string
 }
+
+export interface StatusTrait<TStatus> {
+    status$: Observable<TStatus>
+}
