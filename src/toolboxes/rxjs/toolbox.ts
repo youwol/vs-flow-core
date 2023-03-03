@@ -1,9 +1,13 @@
 import { Modules, ToolBox } from '../../lib'
 import {
+    RxjsCombineLatest,
     RxjsFilter,
+    RxjsForkJoin,
     RxjsMap,
+    RxjsMerge,
     RxjsMergeMap,
     RxjsOf,
+    RxjsTake,
     RxjsTimer,
 } from './rxjs.modules'
 
@@ -50,6 +54,38 @@ export function toolbox() {
                 },
                 implementation: ({ fwdParams }) => {
                     return new RxjsTimer(fwdParams)
+                },
+            }),
+            new Modules.Module({
+                declaration: {
+                    typeId: 'take',
+                },
+                implementation: ({ fwdParams }) => {
+                    return new RxjsTake(fwdParams)
+                },
+            }),
+            new Modules.Module({
+                declaration: {
+                    typeId: 'combineLatest',
+                },
+                implementation: ({ fwdParams }) => {
+                    return new RxjsCombineLatest(fwdParams)
+                },
+            }),
+            new Modules.Module({
+                declaration: {
+                    typeId: 'merge',
+                },
+                implementation: ({ fwdParams }) => {
+                    return new RxjsMerge(fwdParams)
+                },
+            }),
+            new Modules.Module({
+                declaration: {
+                    typeId: 'forkJoin',
+                },
+                implementation: ({ fwdParams }) => {
+                    return new RxjsForkJoin(fwdParams)
                 },
             }),
         ],
