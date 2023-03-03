@@ -18,6 +18,70 @@ import {
 } from 'rxjs'
 import { ExecutionCell } from '../../../../lib/project'
 
+function cellCodeView(state: AppState, cellState: CellCodeState) {
+    const child = (ideView) => ({
+        style: attr$(state.projectByCells$, (hist) => {
+            return hist.has(cellState)
+                ? {
+                      opacity: 1,
+                      borderWidth: '5px',
+                  }
+                : {
+                      opacity: 0.5,
+                  }
+        }),
+        class: attr$(
+            cellState.isLastCell$,
+            (isLast): string =>
+                isLast ? 'fv-border-left-success border-3' : 'w-100 h-100',
+            { wrapper: (d) => `${d} w-100 h-100` },
+        ),
+        children: [
+            ideView,
+            new ReplOutput({
+                cellState: cellState,
+            }),
+        ],
+    })
+    return new CellWrapperView({
+        cellState,
+        onExe: () => {
+            state.execute(cellState).subscribe()
+        },
+        language: 'javascript',
+        child,
+    })
+}
+
+export function cellMarkdownView(state: AppState, cellState: CellTrait) {
+    const editionMode$ = new BehaviorSubject<'view' | 'edit'>('view')
+    const child = (ideView) =>
+        child$(
+            editionMode$.pipe(
+                withLatestFrom(cellState.ideState.updates$['./repl']),
+            ),
+            ([mode, file]) => {
+                return mode == 'edit'
+                    ? {
+                          children: [ideView],
+                      }
+                    : {
+                          innerHTML: window['marked'].parse(file.content),
+                          ondblclick: () => {
+                              editionMode$.next('edit')
+                          },
+                      }
+            },
+        )
+    return new CellWrapperView({
+        cellState,
+        onExe: () => {
+            editionMode$.next('view')
+        },
+        language: 'markdown',
+        child,
+    })
+}
 /**
  * @category View
  */
@@ -40,8 +104,11 @@ export class ReplTab extends DockableTabs.Tab {
                                 state.cells$,
                                 (cellState) => {
                                     return cellState.mode == 'code'
-                                        ? new CellCodeView({ cellState })
-                                        : new CellMarkdownView({ cellState })
+                                        ? cellCodeView(
+                                              state,
+                                              cellState as CellCodeState,
+                                          )
+                                        : cellMarkdownView(state, cellState)
                                 },
                                 {
                                     orderOperator: (a, b) =>
@@ -80,6 +147,7 @@ export function factoryCellState(
               content,
           })
 }
+
 /**
  * @category State
  */
@@ -193,10 +261,7 @@ export class CellMarkdownState implements CellTrait {
     }
 }
 
-/**
- * @category View
- */
-export class CellCodeView implements VirtualDOM {
+export class CellWrapperView {
     /**
      * @group States
      */
@@ -218,129 +283,56 @@ export class CellCodeView implements VirtualDOM {
     public readonly children: VirtualDOM[]
 
     /**
-     * @group Immutable DOM Constants
-     */
-    onclick: (ev: MouseEvent) => void
-
-    constructor(params: { cellState: CellTrait }) {
-        Object.assign(this, params)
-        this.appState = this.cellState.appState
-        const ideView = new Common.CodeEditorView({
-            ideState: this.cellState.ideState,
-            path: './repl',
-            language: 'javascript',
-            config: {
-                extraKeys: {
-                    'Ctrl-Enter': () => {
-                        this.appState.execute(this.cellState).subscribe()
-                    },
-                },
-            },
-        })
-        this.children = [
-            new ReplTopMenuView({
-                cellState: this.cellState,
-                appState: this.appState,
-            }),
-            {
-                style: attr$(this.appState.projectByCells$, (hist) => {
-                    return hist.has(this.cellState)
-                        ? { opacity: 1, borderWidth: '5px' }
-                        : { opacity: 0.5 }
-                }),
-                class: attr$(
-                    this.cellState.isLastCell$,
-                    (isLast): string =>
-                        isLast
-                            ? 'fv-border-left-success border-3'
-                            : 'w-100 h-100',
-                    { wrapper: (d) => `${d} w-100 h-100` },
-                ),
-                children: [
-                    ideView,
-                    new ReplOutput({ cellState: this.cellState }),
-                ],
-            },
-        ]
-        this.onclick = () => this.appState.selectCell(this.cellState)
-    }
-}
-
-/**
- * @category View
- */
-export class CellMarkdownView implements VirtualDOM {
-    /**
      * @group Observables
      */
-    public readonly editionMode$: BehaviorSubject<'view' | 'edit'> =
-        new BehaviorSubject('view')
-    /**
-     * @group States
-     */
-    public readonly cellState: CellMarkdownState
-
-    /**
-     * @group States
-     */
-    public readonly appState: AppState
+    public readonly hovered$: BehaviorSubject<boolean> = new BehaviorSubject(
+        false,
+    )
 
     /**
      * @group Immutable DOM Constants
      */
-    public readonly class = 'w-100 mb-3'
+    public readonly onclick: (ev: MouseEvent) => void
 
     /**
      * @group Immutable DOM Constants
      */
-    public readonly children: VirtualDOM[]
+    public readonly onmouseenter: (ev: MouseEvent) => void
 
     /**
      * @group Immutable DOM Constants
      */
-    onclick: (ev: MouseEvent) => void
+    public readonly onmouseleave: (ev: MouseEvent) => void
 
-    constructor(params: { cellState: CellTrait }) {
+    constructor(params: { cellState: CellTrait; onExe; language; child }) {
         Object.assign(this, params)
         this.appState = this.cellState.appState
         const ideView = new Common.CodeEditorView({
             ideState: this.cellState.ideState,
             path: './repl',
-            language: 'markdown',
+            language: params.language,
             config: {
                 extraKeys: {
                     'Ctrl-Enter': () => {
-                        this.editionMode$.next('view')
+                        params.onExe()
                     },
                 },
             },
         })
         this.children = [
-            new ReplTopMenuView({
-                cellState: this.cellState,
-                appState: this.appState,
+            child$(this.hovered$, (hovered) => {
+                return hovered
+                    ? new ReplTopMenuView({
+                          cellState: this.cellState,
+                          appState: this.appState,
+                      })
+                    : { innerHTML: '&#8205; ' }
             }),
-            child$(
-                this.editionMode$.pipe(
-                    withLatestFrom(
-                        params.cellState.ideState.updates$['./repl'],
-                    ),
-                ),
-                ([mode, file]) => {
-                    return mode == 'edit'
-                        ? {
-                              children: [ideView],
-                          }
-                        : {
-                              innerHTML: window['marked'].parse(file.content),
-                              ondblclick: () => {
-                                  this.editionMode$.next('edit')
-                              },
-                          }
-                },
-            ),
+            params.child(ideView),
         ]
         this.onclick = () => this.appState.selectCell(this.cellState)
+        this.onmouseenter = () => this.hovered$.next(true)
+        this.onmouseleave = () => this.hovered$.next(false)
     }
 }
 
