@@ -3,7 +3,7 @@ import { Vector3 } from 'three'
 
 import { renderDag } from './dag'
 import { ProjectState } from '../../../lib/project'
-import { Environment3D, SelectableMesh } from './environment3d'
+import { Environment3D, SelectableObject3D } from './environment3d'
 import { ReplaySubject } from 'rxjs'
 
 export class Renderer3DView {
@@ -83,20 +83,20 @@ function render(environment3d: Environment3D) {
     )
 
     if (intersects.length > 0) {
-        const obj = intersects[0].object as unknown as SelectableMesh
+        const obj = intersects[0].object as unknown as SelectableObject3D
         if (environment3d.hovered && environment3d.hovered == obj) {
             return
         }
         if (environment3d.hovered && environment3d.hovered != obj) {
-            environment3d.hovered.userData.selectableTrait.onRestored()
+            environment3d.hovered.userData.selector.onRestored()
             environment3d.hovered = obj
         }
         environment3d.hovered = intersects[0]
-            .object as unknown as SelectableMesh
-        environment3d.hovered.userData.selectableTrait.onHovered()
+            .object as unknown as SelectableObject3D
+        environment3d.hovered.userData.selector.onHovered()
     }
     if (intersects.length == 0 && environment3d.hovered) {
-        environment3d.hovered.userData.selectableTrait.onRestored()
+        environment3d.hovered.userData.selector.onRestored()
         environment3d.hovered = undefined
     }
 }

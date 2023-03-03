@@ -1,12 +1,12 @@
 import { GridHelper, Mesh, PlaneGeometry, ShadowMaterial, Vector3 } from 'three'
 import { getBoundingBox } from '../utils'
+import { SelectableObject3D } from '../environment3d'
 
 export class GroundObject3d extends Mesh {
     public readonly name = 'ground'
     public readonly selectables: Mesh[]
 
-    public selected = false
-    constructor(params: { selectables: Mesh[] }) {
+    constructor(params: { selectables: SelectableObject3D[] }) {
         super()
         Object.assign(this, params)
         if (this.selectables.length == 0) {

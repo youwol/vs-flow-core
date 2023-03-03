@@ -5,19 +5,23 @@ import {
     Vector3,
 } from 'three'
 import { Implementation } from '../../../../lib/modules'
-import { SelectableTrait } from './traits'
+import { SelectableTrait, Selector } from './traits'
 import { ReplaySubject } from 'rxjs'
 import { CSS3DObject } from '../renderers/css-3d-renderer'
+import { render } from '@youwol/flux-view'
 
-export class ModuleObject3d extends Mesh implements SelectableTrait {
+export class ModuleObject3d
+    extends Mesh
+    implements SelectableTrait<Implementation>
+{
     public readonly module: Implementation
     public readonly entitiesPositions: { [k: string]: Vector3 }
 
     public readonly sphere: Mesh
     public readonly sphereMaterial: MeshStandardMaterial
     public readonly uidSelected$: ReplaySubject<string>
+    public readonly selector: Selector<Implementation>
 
-    public selected = false
     constructor(params: {
         module: Implementation
         entitiesPositions: { [k: string]: Vector3 }
@@ -46,40 +50,15 @@ export class ModuleObject3d extends Mesh implements SelectableTrait {
         this.sphere.add(label)
         label.layers.set(0)
         this.children = [this.sphere]
-        this.sphere.userData.selectableTrait = this
         this.sphere.name = `#${this.module.uid}`
-        this.uidSelected$.subscribe((uid) => {
-            if (uid != this.module.uid) {
-                this.selected = false
-                this.onRestored()
-                return
-            }
-            this.onSelected()
+
+        this.selector = new Selector<Implementation>({
+            entity: this.module,
+            selectables: [this.sphere],
+            onHovered: () => this.sphereMaterial.emissive.set(0x008f00),
+            onSelected: () => this.sphereMaterial.emissive.set(0x00008f),
+            onRestored: () => this.sphereMaterial.emissive.set(0x8f0000),
+            uidSelected$: this.uidSelected$,
         })
-    }
-
-    getEntity(): Implementation {
-        return this.module
-    }
-
-    getSelectables() {
-        return [this.sphere]
-    }
-
-    onHovered() {
-        document.body.style.cursor = 'pointer'
-        this.sphereMaterial.emissive.set(0x008f00)
-    }
-    onRestored() {
-        if (this.selected) {
-            return
-        }
-        document.body.style.cursor = 'default'
-        this.sphereMaterial.emissive.set(0x8f0000)
-    }
-    onSelected() {
-        this.selected = true
-        document.body.style.cursor = 'default'
-        this.sphereMaterial.emissive.set(0x00008f)
     }
 }

@@ -7,8 +7,7 @@ import {
     SphereBufferGeometry,
     Vector3,
 } from 'three'
-import { Implementation } from '../../../../lib/modules'
-import { SelectableTrait } from './traits'
+import { SelectableTrait, Selector } from './traits'
 import { ReplaySubject } from 'rxjs'
 import { Layer } from '../../../../lib/workflows'
 import { ProjectState } from '../../../../lib/project'
@@ -21,7 +20,7 @@ import {
 import { ConnectionObject3d } from './connection.object3d'
 import { CSS3DObject } from '../renderers/css-3d-renderer'
 
-export class GroupObject3d extends Mesh implements SelectableTrait {
+export class GroupObject3d extends Mesh implements SelectableTrait<Layer> {
     public readonly environment3d: Environment3D
     public readonly group: Layer
     public readonly project: ProjectState
@@ -31,8 +30,10 @@ export class GroupObject3d extends Mesh implements SelectableTrait {
     public readonly sphereMaterial: MeshStandardMaterial
     public readonly uidSelected$: ReplaySubject<string>
 
-    public selected = false
     public readonly groupSubWf3d = new Group()
+
+    public readonly selector: Selector<Layer>
+
     constructor(params: {
         project: ProjectState
         group: Layer
@@ -65,38 +66,18 @@ export class GroupObject3d extends Mesh implements SelectableTrait {
         label.layers.set(0)
         this.children = [this.sphere, this.groupSubWf3d]
 
-        this.sphere.userData.selectableTrait = this
-        this.uidSelected$.subscribe((uid) => {
-            if (uid != this.group.uid) {
-                this.selected = false
-                this.onRestored()
-                return
-            }
-            this.onSelected()
+        this.selector = new Selector<Layer>({
+            entity: this.group,
+            selectables: [this.sphere],
+            onHovered: () => this.sphereMaterial.emissive.set(0x008f00),
+            onSelected: () =>
+                this.sphereMaterial.emissive.set(0x00008f) && this.select(),
+            onRestored: () => this.sphereMaterial.emissive.set(0x8f0000),
+            uidSelected$: this.uidSelected$,
         })
     }
 
-    getEntity(): Implementation {
-        return this.group as any
-    }
-
-    getSelectables() {
-        return [this.sphere]
-    }
-
-    onHovered() {
-        document.body.style.cursor = 'pointer'
-        this.sphereMaterial.emissive.set(0x008f00)
-    }
-    onRestored() {
-        if (this.selected) {
-            return
-        }
-        document.body.style.cursor = 'default'
-        this.sphereMaterial.emissive.set(0x8f0000)
-    }
-    onSelected() {
-        this.selected = true
+    select() {
         if (this.groupSubWf3d.children.length > 0) {
             return
         }
@@ -135,6 +116,7 @@ export class GroupObject3d extends Mesh implements SelectableTrait {
                             ...this.entitiesPositions,
                         },
                         color: new Color().set(0x00ffff),
+                        uidSelected$: this.uidSelected$,
                     }),
             )
             .forEach((c) => {
@@ -142,7 +124,5 @@ export class GroupObject3d extends Mesh implements SelectableTrait {
             })
         document.body.style.cursor = 'default'
         this.environment3d.addSelectables(dynamicContent3d)
-
-        this.sphereMaterial.emissive.set(0x00008f)
     }
 }

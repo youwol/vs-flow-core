@@ -1,6 +1,5 @@
 import {
     Light,
-    Mesh,
     Object3D,
     PerspectiveCamera,
     Raycaster,
@@ -9,7 +8,7 @@ import {
     Vector3,
     WebGLRenderer,
 } from 'three'
-import { SelectableTrait } from './objects3d/traits'
+import { Selector } from './objects3d/traits'
 import { ProjectState } from '../../../lib/project'
 import { CSS2DRenderer } from './renderers/css-2d-renderer'
 import * as THREE from 'three'
@@ -27,9 +26,10 @@ import { GroundObject3d } from './objects3d/ground.object3d'
 import { VirtualDOM, render } from '@youwol/flux-view'
 import { CSS3DObject, CSS3DRenderer } from './renderers/css-3d-renderer'
 import { TrackballControls } from './controls/trackball.controls'
+import { UidTrait } from '../../../lib/modules/traits'
 
-export type SelectableMesh = Mesh & {
-    userData: { selectableTrait: SelectableTrait }
+export type SelectableObject3D = Object3D & {
+    userData: { selector: Selector<UidTrait> }
 }
 
 class InterLayersConnection {
@@ -101,6 +101,7 @@ export class Dynamic3dContent {
             return new ConnectionObject3d({
                 connection: c.connection,
                 positions: this.entitiesPosition,
+                uidSelected$: params.uidSelected$,
             })
         })
         this.interConnection = this.layerOrganizer.interConnections.map((c) => {
@@ -274,9 +275,9 @@ export class Environment3D {
     public readonly camera: PerspectiveCamera
     public readonly controls //: typeof(TrackballControls)
 
-    public selectables: SelectableMesh[] = []
+    public selectables: SelectableObject3D[] = []
     public ground: GroundObject3d
-    public hovered: SelectableMesh
+    public hovered: SelectableObject3D
     public readonly uidSelected$: ReplaySubject<string>
 
     public readonly controls$: Observable<{ controls; camera }>
@@ -350,7 +351,7 @@ export class Environment3D {
         this.htmlElementContainer.onclick = () => {
             if (this.hovered) {
                 this.uidSelected$.next(
-                    this.hovered.userData.selectableTrait.getEntity().uid,
+                    this.hovered.userData.selector.getEntity().uid,
                 )
             } else {
                 this.uidSelected$.next(undefined)
@@ -385,9 +386,13 @@ export class Environment3D {
     addSelectables(dynamicContent3d: Dynamic3dContent) {
         this.selectables = [
             ...this.selectables,
-            ...([...dynamicContent3d.modules, ...dynamicContent3d.groups]
+            ...([
+                ...dynamicContent3d.modules,
+                ...dynamicContent3d.intraConnection,
+                ...dynamicContent3d.groups,
+            ]
                 .map((m) => m.children)
-                .flat() as SelectableMesh[]),
+                .flat() as SelectableObject3D[]),
         ]
         this.ground && this.scene.remove(this.ground)
         this.ground = new GroundObject3d({ selectables: this.selectables })

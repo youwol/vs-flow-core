@@ -11,28 +11,42 @@ import {
     Color,
 } from 'three'
 import { Connection } from '../../../../lib/connections'
+import { SelectableTrait, Selector } from './traits'
+import { ReplaySubject } from 'rxjs'
 
-export class ConnectionObject3d extends Object3D {
+export class ConnectionObject3d
+    extends Object3D
+    implements SelectableTrait<Connection>
+{
     public readonly connection: Connection
     public readonly positions: { [k: string]: Vector3 }
+    public readonly line: Line
+    public readonly lineMaterial: LineBasicMaterial
+
+    public readonly selector: Selector<Connection>
 
     constructor(params: {
         connection: Connection
         positions: { [k: string]: Vector3 }
         color?: Color
+        uidSelected$: ReplaySubject<string>
     }) {
         super()
         Object.assign(this, params)
         const start = this.positions[this.connection.start.moduleId]
         const end = this.positions[this.connection.end.moduleId]
 
-        const material = new LineBasicMaterial({
+        this.lineMaterial = new LineBasicMaterial({
             color: params.color || 0x0000ff,
+            linewidth: 1,
         })
-
+        this.connection.status$.subscribe((status) => {
+            this.lineMaterial.color = status.connected
+                ? new Color(0x0000ff)
+                : new Color(0xff0000)
+        })
         const geometry = new BufferGeometry().setFromPoints([start, end])
-        const line = new Line(geometry, material)
-        line.castShadow = true
+        this.line = new Line(geometry, this.lineMaterial)
         const dir = new Vector3().subVectors(end, start).normalize()
         const l = start.distanceTo(end)
 
@@ -45,8 +59,17 @@ export class ConnectionObject3d extends Object3D {
             1,
         )
         this.children = this.connection.configuration.adaptor
-            ? [line, arrowHelper, new AdaptorObject3D(params)]
-            : [line, arrowHelper]
+            ? [this.line, arrowHelper, new AdaptorObject3D(params)]
+            : [this.line, arrowHelper]
+
+        this.selector = new Selector<Connection>({
+            entity: this.connection,
+            selectables: [this.line],
+            onHovered: () => (this.lineMaterial.linewidth = 2),
+            onSelected: () => (this.lineMaterial.linewidth = 4),
+            onRestored: () => (this.lineMaterial.linewidth = 1),
+            uidSelected$: params.uidSelected$,
+        })
     }
 }
 
