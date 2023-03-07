@@ -2,7 +2,9 @@ export interface AttributeTrait<TValue> {
     __value: TValue
 }
 
-export class JsCode<TFct> implements AttributeTrait<TFct> {
+export class JsCode<TFct extends (...d: unknown[]) => unknown>
+    implements AttributeTrait<TFct>
+{
     public readonly __value: TFct
 
     constructor(params: { value?: string | TFct }) {
