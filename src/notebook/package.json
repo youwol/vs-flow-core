@@ -1,6 +1,6 @@
 {
     "name": "@youwol/vs-flow-repl",
-    "description": "vs-flow REPL",
+    "description": "vs-flow-notebook",
     "version": "0.0.1-wip",
     "author": "greinisch@youwol.com",
     "homepage": "https://github.com/youwol/vs-flow-repl#README.md",
