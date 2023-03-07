@@ -13,6 +13,10 @@ export class JsCode<TFct extends (...d: unknown[]) => unknown>
                 ? new Function(params.value)()
                 : params.value
     }
+
+    execute(...args: Parameters<TFct>): ReturnType<TFct> {
+        return this.__value(...args) as ReturnType<TFct>
+    }
 }
 
 export class Float implements AttributeTrait<number> {
