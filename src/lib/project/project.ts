@@ -1,10 +1,10 @@
 import { IEnvironment } from '../environment'
-import { Connection } from '../connections'
 import { Layer, Workflow } from '../workflows'
 import { Modules } from '..'
 import { ApiTrait } from '../modules/traits'
 import { InputMessage } from '../modules'
 import { VirtualDOM } from '@youwol/flux-view'
+import { addFlows, parseDag } from './parsing-utils'
 
 export type Macro = Workflow & ApiTrait
 
@@ -86,69 +86,36 @@ export class ProjectState {
             })
     }
 
+    import(...toolboxes: string[]) {
+        return Promise.all(
+            toolboxes.map((t) => this.environment.import(t)),
+        ).then(() => this)
+    }
+
     getObservable({ moduleId, slotId }: { moduleId: string; slotId: string }) {
         return this.main.modules
             .find((m) => m.uid == moduleId)
             .outputSlots.find((s) => s.slotId == slotId).observable$
     }
 
-    addFlows(flows: FlowNode[][]): UpgradedProject {
-        const {
-            modules,
-            connections,
-        }: { modules: Modules.Implementation[]; connections: Connection[] } =
-            flows
-                .map((flow) => {
-                    const starts = flow.slice(0, -1)
-                    const ends = flow.slice(1)
-                    const modules = flow.map(({ module }) => module)
-                    const connections = starts.map((start, i) => {
-                        const end = ends[i]
-                        return new Connection({
-                            start: {
-                                moduleId: start.module.uid,
-                                slotId: start.output,
-                            },
-                            end: {
-                                moduleId: end.module.uid,
-                                slotId: end.input,
-                            },
-                            configuration: { adaptor: end.adaptor },
-                        })
-                    })
-                    return { modules, connections }
-                })
-                .reduce(
-                    (acc, e) => {
-                        return {
-                            modules: [...acc.modules, ...e.modules],
-                            connections: [...acc.connections, ...e.connections],
-                        }
-                    },
-                    { modules: [], connections: [] },
-                )
-        const modulesSet = new Set([...this.main.modules, ...modules])
-        const root = this.main.rootLayer
-        const rootModuleIds = new Set([
-            ...root.moduleIds,
-            ...modules.map((m) => m.uid),
-        ])
-        const newProject = new ProjectState({
-            ...this,
-            main: new Workflow({
-                modules: [...modulesSet],
-                connections: [...this.main.connections, ...connections],
-                rootLayer: new Layer({
-                    uid: root.uid,
-                    children: root.children,
-                    moduleIds: [...rootModuleIds],
-                }),
-            }),
-        })
-        return {
-            project: newProject,
-            delta: computeDelta(this, newProject),
-        }
+    async parseDag(
+        flows: string[] | string[][],
+        options: {
+            adaptors?: { [k: string]: ({ data, context }) => InputMessage }
+            configurations?: { [k: string]: unknown }
+        } = {},
+    ) {
+        const branches = await parseDag(
+            this.main.modules,
+            this.environment,
+            flows,
+            options,
+        )
+        return addFlows(this, branches)
+    }
+
+    addFlows(flows: FlowNode[][]): ProjectState {
+        return addFlows(this, flows)
     }
 
     addLayer({
@@ -160,7 +127,7 @@ export class ProjectState {
         parentLayerId?: string
         layerId?: string
         uids: string[]
-    }): UpgradedProject {
+    }): ProjectState {
         const moduleIds = uids.filter((uid) =>
             this.main.modules.find((m) => m.uid == uid),
         )
@@ -175,7 +142,7 @@ export class ProjectState {
             include: layer,
             at: parentLayerId,
         })
-        const newProject = new ProjectState({
+        return new ProjectState({
             ...this,
             main: new Workflow({
                 modules: this.main.modules,
@@ -185,10 +152,14 @@ export class ProjectState {
             macros: this.macros,
             environment: this.environment,
         })
-        return {
-            project: newProject,
-            delta: computeDelta(this, newProject),
-        }
+    }
+
+    organize(
+        data: [{ layerId: string; parentLayerId?: string; uids: string[] }],
+    ): ProjectState {
+        return data.reduce((acc, e) => {
+            return acc.addLayer(e)
+        }, this)
     }
 
     addView({
@@ -197,18 +168,14 @@ export class ProjectState {
     }: {
         viewId: string
         implementation: (project: ProjectState) => VirtualDOM
-    }): UpgradedProject {
-        const newProject = new ProjectState({
+    }): ProjectState {
+        return new ProjectState({
             ...this,
             views: {
                 ...this.views,
                 [viewId]: implementation,
             },
         })
-        return {
-            project: newProject,
-            delta: computeDelta(this, newProject),
-        }
     }
 }
 
