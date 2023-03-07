@@ -1,13 +1,10 @@
-import { Projects } from '../../../lib'
 import { Environment } from './environment'
 import { DockableTabs } from '@youwol/fv-tabs'
 import {
     BehaviorSubject,
     combineLatest,
-    forkJoin,
     from,
     Observable,
-    of,
     ReplaySubject,
 } from 'rxjs'
 import { downloadZip } from 'client-zip'
@@ -22,7 +19,7 @@ import {
     Workflow,
     View,
     CellCodeState,
-    CellTrait,
+    NotebookCellTrait,
     factoryCellState,
 } from './side-nav-tabs'
 import { ImmutableTree } from '@youwol/fv-tree'
@@ -34,16 +31,15 @@ import {
     mergeMap,
     shareReplay,
     switchMap,
-    take,
     tap,
 } from 'rxjs/operators'
 import { HttpModels } from '.'
 import { AssetsGateway } from '@youwol/http-clients'
-import { ProjectState } from '../../../lib/project'
+import { ProjectState, BatchCells } from '../../../lib/project'
 
 import { Workflow as WfModel } from '../../../lib/workflows'
 
-type ProjectByCells = Map<CellTrait, ProjectState>
+type ProjectByCells = Map<NotebookCellTrait, ProjectState>
 /**
  * @category State
  * @category Entry Point
@@ -57,23 +53,18 @@ export class AppState {
     /**
      * Immutable Constants
      */
-    public readonly repl: Projects.Repl
-
-    /**
-     * Immutable Constants
-     */
     public readonly assetId: string
 
     /**
      * @group Observable
      */
-    public readonly cells$ = new BehaviorSubject<CellTrait[]>([])
+    public readonly cells$ = new BehaviorSubject<NotebookCellTrait[]>([])
 
     /**
      @group Observable
      */
     public readonly projectByCells$ = new BehaviorSubject(
-        new Map<CellTrait, ProjectState>(),
+        new Map<NotebookCellTrait, ProjectState>(),
     )
 
     /**
@@ -114,27 +105,31 @@ export class AppState {
         ImmutableTree.State<NodeProjectBase>
     >
 
+    public readonly emptyProject: ProjectState
+    public readonly environment: Environment = new Environment({
+        toolboxes: [],
+    })
+
     constructor(params: {
         assetId: string
         originalReplSource: HttpModels.ReplSource
     }) {
         Object.assign(this, params)
         const assetsGtwClient = new AssetsGateway.Client()
-        const environment = new Environment({ toolboxes: [] })
-        const emptyProject = new ProjectState({
+        this.emptyProject = new ProjectState({
             main: new WfModel(),
             macros: [],
-            environment,
+            environment: this.environment,
         })
-        this.lastAvailableProject = emptyProject
-        this.project$ = new BehaviorSubject(emptyProject)
+        this.lastAvailableProject = this.emptyProject
+        this.project$ = new BehaviorSubject(this.emptyProject)
         let prev = undefined
         const history = new Map()
         this.cells$.next(
             params.originalReplSource.cells.map((c, i) => {
                 const cell = factoryCellState(c.mode, this, c.content)
                 if (i == 0) {
-                    history.set(cell, emptyProject)
+                    history.set(cell, this.emptyProject)
                 }
                 if (i > 0 && prev && history.get(prev)) {
                     history.set(cell, history.get(prev))
@@ -182,10 +177,6 @@ export class AppState {
                 console.log('Saved', v)
             })
 
-        this.repl = new Projects.Repl({
-            environment,
-            project$: this.project$,
-        })
         this.projectExplorerState$ = this.project$.pipe(
             filter((p) => p != undefined),
             map((project) => {
@@ -241,45 +232,28 @@ export class AppState {
         })
     }
 
-    execute(cell: CellTrait): Observable<{
+    execute(cell: NotebookCellTrait): Promise<{
         history: ProjectByCells
         project: ProjectState
     }> {
         const index = this.cells$.value.indexOf(cell)
-        return this.projectByCells$.pipe(
-            take(1),
-            mergeMap((history) => {
-                if (!history.has(cell)) {
-                    const cell = this.cells$.value[index - 1]
-                    return this.execute(cell)
-                }
-                return of(history.get(cell)).pipe(
-                    map((project) => ({ history, project })),
-                )
-            }),
-            mergeMap(({ project, history }) => {
-                this.project$.next(project)
-                return forkJoin([cell.execute()]).pipe(
-                    mergeMap(() => this.project$),
-                    take(1),
-                    map((project) => ({ history, project })),
-                )
-            }),
-            map(({ history, project }) => {
-                this.lastAvailableProject = project
-                if (index == this.cells$.value.length - 1) {
-                    return
-                }
-                const newHistory = new Map()
-                this.cells$.value.slice(0, index + 1).forEach((cell) => {
-                    newHistory.set(cell, history.get(cell))
-                })
-                const next = this.cells$.value[index + 1]
-                newHistory.set(next, project)
+        const executingCells = this.cells$.value.slice(0, index + 1)
+        const batch = new BatchCells({
+            cells: executingCells,
+            projectsStore$: this.projectByCells$,
+        })
+        return batch.execute(this.emptyProject).then((project) => {
+            this.project$.next(project)
+            if (index < this.cells$.value.length - 1) {
+                const newHistory = new Map(this.projectByCells$.value)
+                newHistory.set(this.cells$.value[index + 1], project)
                 this.projectByCells$.next(newHistory)
-                return { history: newHistory, project }
-            }),
-        )
+            }
+            return {
+                history: this.projectByCells$.value,
+                project,
+            }
+        })
     }
 
     openTab(nodeId: string) {
@@ -300,7 +274,7 @@ export class AppState {
         }
     }
 
-    newCell(cellRef: CellTrait, where: 'after' | 'before') {
+    newCell(cellRef: NotebookCellTrait, where: 'after' | 'before') {
         const cells = this.cells$.value
         const newCell = new CellCodeState({
             appState: this,
@@ -320,7 +294,7 @@ export class AppState {
         this.cells$.next(newCells)
     }
 
-    deleteCell(cell?: CellTrait) {
+    deleteCell(cell?: NotebookCellTrait) {
         const cells = this.cells$.value
         const newCells = cells.filter((c) => c != cell)
 
@@ -333,14 +307,14 @@ export class AppState {
         }
     }
 
-    selectCell(cell: CellTrait) {
+    selectCell(cell: NotebookCellTrait) {
         const indexCell = this.cells$.value.indexOf(cell)
         const nextCell = this.cells$.value[indexCell + 1]
         const state = this.projectByCells$.value.get(nextCell)
         state != this.project$.value && this.project$.next(state)
     }
 
-    changeCellMode(cell: CellTrait, mode: 'code' | 'markdown') {
+    changeCellMode(cell: NotebookCellTrait, mode: 'code' | 'markdown') {
         const newCell = factoryCellState(
             mode,
             this,

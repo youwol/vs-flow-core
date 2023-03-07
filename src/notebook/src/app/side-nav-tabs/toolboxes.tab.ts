@@ -41,7 +41,7 @@ export class ToolboxesView implements VirtualDOM {
     constructor(params: { state: AppState }) {
         Object.assign(this, params)
         this.children = [
-            child$(this.state.repl.environment.toolboxes$, (toolboxes) => {
+            child$(this.state.environment.toolboxes$, (toolboxes) => {
                 const rootNode = createRootNode(toolboxes)
                 const state = new ImmutableTree.State<NodeToolboxesBase>({
                     rootNode,

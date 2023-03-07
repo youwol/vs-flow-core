@@ -7,16 +7,15 @@ import {
     VirtualDOM,
 } from '@youwol/flux-view'
 import { AppState } from '../app.state'
-import { map, scan, tap, withLatestFrom } from 'rxjs/operators'
+import { map, scan, withLatestFrom } from 'rxjs/operators'
+import { BehaviorSubject, combineLatest, Observable, ReplaySubject } from 'rxjs'
 import {
-    BehaviorSubject,
-    combineLatest,
-    EMPTY,
-    forkJoin,
-    Observable,
-    ReplaySubject,
-} from 'rxjs'
-import { ExecutionCell } from '../../../../lib/project'
+    CellFunction,
+    CellTrait,
+    ProjectCell,
+    ProjectState,
+} from '../../../../lib/project'
+import { JsCode } from '../../../../lib/modules/configurations/attributes'
 
 function cellCodeView(state: AppState, cellState: CellCodeState) {
     const child = (ideView) => ({
@@ -46,14 +45,17 @@ function cellCodeView(state: AppState, cellState: CellCodeState) {
     return new CellWrapperView({
         cellState,
         onExe: () => {
-            state.execute(cellState).subscribe()
+            state.execute(cellState) //.subscribe()
         },
         language: 'javascript',
         child,
     })
 }
 
-export function cellMarkdownView(state: AppState, cellState: CellTrait) {
+export function cellMarkdownView(
+    state: AppState,
+    cellState: NotebookCellTrait,
+) {
     const editionMode$ = new BehaviorSubject<'view' | 'edit'>('view')
     const child = (ideView) =>
         child$(
@@ -124,10 +126,10 @@ export class ReplTab extends DockableTabs.Tab {
     }
 }
 
-export interface CellTrait {
+export interface NotebookCellTrait extends CellTrait {
     mode: 'code' | 'markdown'
 
-    execute: () => Observable<VirtualDOM>
+    execute: (ProjectState) => Promise<ProjectState>
 
     ideState: Common.IdeState
 }
@@ -151,7 +153,7 @@ export function factoryCellState(
 /**
  * @category State
  */
-export class CellCodeState implements CellTrait {
+export class CellCodeState implements NotebookCellTrait {
     /**
      * @group ImmutableConstant
      */
@@ -175,7 +177,7 @@ export class CellCodeState implements CellTrait {
     /**
      * @group Observables
      */
-    public readonly output$ = new ReplaySubject<VirtualDOM | false>()
+    public readonly output$ = new ReplaySubject<VirtualDOM | 'clear'>()
 
     /**
      * @group Observables
@@ -203,31 +205,30 @@ export class CellCodeState implements CellTrait {
             }),
         )
         this.outputs$ = this.output$.pipe(
-            scan((acc, e) => (e ? [...acc, e] : []), []),
+            scan((acc, e) => (e != 'clear' ? [...acc, e] : []), []),
         )
     }
 
-    execute(): Observable<VirtualDOM> {
-        const executor = new ExecutionCell({
-            source: this.ideState.updates$['./repl'].value.content,
-            repl: this.appState.repl,
+    execute(project: ProjectState): Promise<ProjectState> {
+        const attrCode = new JsCode<CellFunction>({
+            value: this.ideState.updates$['./repl'].value.content,
         })
-        const out$ = executor.execute()
-        this.output$.next(false)
-        return forkJoin([
-            out$.pipe(
-                tap((view) => {
-                    this.output$.next(view)
-                }),
-            ),
-        ])
+        const executor = new ProjectCell({
+            source: attrCode,
+            environment: this.appState.environment,
+        })
+        this.output$.next('clear')
+        executor.outputs$.subscribe((view) => {
+            this.output$.next(view)
+        })
+        return executor.execute(project)
     }
 }
 
 /**
  * @category State
  */
-export class CellMarkdownState implements CellTrait {
+export class CellMarkdownState implements NotebookCellTrait {
     /**
      * @group ImmutableConstant
      */
@@ -256,8 +257,8 @@ export class CellMarkdownState implements CellTrait {
         })
     }
 
-    execute(): Observable<VirtualDOM> {
-        return EMPTY
+    execute(project: ProjectState): Promise<ProjectState> {
+        return Promise.resolve(project)
     }
 }
 
@@ -304,7 +305,12 @@ export class CellWrapperView {
      */
     public readonly onmouseleave: (ev: MouseEvent) => void
 
-    constructor(params: { cellState: CellTrait; onExe; language; child }) {
+    constructor(params: {
+        cellState: NotebookCellTrait
+        onExe
+        language
+        child
+    }) {
         Object.assign(this, params)
         this.appState = this.cellState.appState
         const ideView = new Common.CodeEditorView({
@@ -382,7 +388,7 @@ export class ReplTopMenuView {
     /**
      * @group States
      */
-    public readonly cellState: CellTrait
+    public readonly cellState: NotebookCellTrait
 
     /**
      * @group Immutable DOM Constants
@@ -393,7 +399,7 @@ export class ReplTopMenuView {
      */
     public readonly children: VirtualDOM[]
 
-    constructor(params: { cellState: CellTrait; appState: AppState }) {
+    constructor(params: { cellState: NotebookCellTrait; appState: AppState }) {
         Object.assign(this, params)
         const classIcon =
             'd-flex align-items-center rounded p-1 fv-hover-bg-background-alt fv-pointer'
