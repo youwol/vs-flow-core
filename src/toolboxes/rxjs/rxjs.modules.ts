@@ -1,4 +1,4 @@
-import { filter, map, mergeMap, take, tap } from 'rxjs/operators'
+import { filter, map, mergeMap, take } from 'rxjs/operators'
 import { combineLatest, forkJoin, merge, Observable, of, timer } from 'rxjs'
 import { Context } from '@youwol/logging'
 import {
@@ -360,7 +360,6 @@ export class RxjsForkJoin extends Modules.DefaultImplementation<TSchemaStreamCom
                 outputs: ({ inputs, context }) => {
                     return {
                         output$: forkJoin(...Object.values(inputs)).pipe(
-                            tap((d) => console.log('AAAAAA', d)),
                             map((messages) => {
                                 return {
                                     data: messages.map((m) => m.data),
