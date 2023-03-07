@@ -1,26 +1,11 @@
-import { Repl } from '../lib/project'
-import { TestEnvironment } from './environment'
-import { toolbox } from './toolbox'
-import { Sphere } from './modules-implementation/sphere.module'
 import { RxjsFilter } from '../toolboxes/rxjs'
+import { Sphere } from './modules-implementation/sphere.module'
 import { attr$ } from '@youwol/flux-view'
+import { emptyProject } from './test.utils'
 
-test('repl import', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [] }),
-    })
-    await repl.import('rxjs')
-    const { project } = await repl.__(['filter'])
-    expect(project.main.modules).toHaveLength(1)
-    expect(project.main.modules[0]).toBeInstanceOf(RxjsFilter)
-})
-
-test('repl one module', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__(['filter'])
+test('one module', async () => {
+    let project = emptyProject()
+    project = await project.parseDag(['filter'])
     const [modules, connections] = [
         project.main.modules,
         project.main.connections,
@@ -30,12 +15,9 @@ test('repl one module', async () => {
     expect(connections).toHaveLength(0)
 })
 
-test('repl only modules', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__(['filter', 'sphere'])
+test('only modules', async () => {
+    let project = emptyProject()
+    project = await project.parseDag(['filter', 'sphere'])
     const [modules, connections] = [
         project.main.modules,
         project.main.connections,
@@ -49,12 +31,9 @@ test('repl only modules', async () => {
     expect(connections[0].end.slotId).toBe('input$')
 })
 
-test('repl modules with IO', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__(['filter>0', '0>sphere>0'])
+test('modules with IO', async () => {
+    let project = emptyProject()
+    project = await project.parseDag(['filter>0', '0>sphere>0'])
     const [modules, connections] = [
         project.main.modules,
         project.main.connections,
@@ -66,11 +45,8 @@ test('repl modules with IO', async () => {
 })
 
 test('repl modules with IO & adaptor', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__(['filter>0', 'a0=0>sphere>0'], {
+    let project = emptyProject()
+    project = await project.parseDag(['filter>0', 'a0=0>sphere>0'], {
         adaptors: {
             a0: ({ data }) => ({ data, configuration: {} }),
         },
@@ -90,11 +66,8 @@ test('repl modules with IO & adaptor', async () => {
 })
 
 test('repl modules with IO & name', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__([
+    let project = emptyProject()
+    project = await project.parseDag([
         ['filter>0', '0>sphere(s0)>0'],
         ['filter>0', '0>#s0'],
     ])
@@ -115,11 +88,8 @@ test('repl modules with IO & name', async () => {
 })
 
 test('repl modules with config', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__([
+    let project = emptyProject()
+    project = await project.parseDag([
         'sphere(s0,{"transform":{"translation":{"x":4}}})',
     ])
     const modules = project.main.modules
@@ -132,11 +102,8 @@ test('repl modules with config', async () => {
 })
 
 test('repl modules with config 2', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__([
+    let project = emptyProject()
+    project = await project.parseDag([
         'sphere({"transform":{"translation":{"x":4}}})',
     ])
     const modules = project.main.modules
@@ -149,11 +116,8 @@ test('repl modules with config 2', async () => {
 })
 
 test('repl modules with config 3', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__(['sphere({@c})'], {
+    let project = emptyProject()
+    project = await project.parseDag(['sphere({@c})'], {
         configurations: {
             '@c': { transform: { translation: { x: 4 } } },
         },
@@ -168,11 +132,8 @@ test('repl modules with config 3', async () => {
 })
 
 test('repl modules with config 4', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__(['sphere(s0,{@c})'], {
+    let project = emptyProject()
+    project = await project.parseDag(['sphere(s0,{@c})'], {
         configurations: {
             '@c': { transform: { translation: { x: 4 } } },
         },
@@ -187,16 +148,12 @@ test('repl modules with config 4', async () => {
 })
 
 test('repl organize', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    await repl.__([
+    let project = emptyProject()
+    project = await project.parseDag([
         ['filter(filter)', 'map(map)', 'mergeMap(m2)'],
         ['of(of)', '#m2'],
     ])
-    const { project } = repl.organize([
-        { layerId: 'foo', uids: ['filter', 'map'] },
-    ])
+    project = project.organize([{ layerId: 'foo', uids: ['filter', 'map'] }])
     expect(project.main.rootLayer.moduleIds).toEqual(['m2', 'of'])
     expect(project.main.rootLayer.children).toHaveLength(1)
     expect(project.main.rootLayer.children[0].moduleIds).toEqual([
@@ -207,18 +164,18 @@ test('repl organize', async () => {
 })
 
 test('repl with view', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    await repl.__(['timer(t0,{"name":"1s"})', 'filter(f0,{@f0})', 'map(m0)'], {
-        configurations: {
-            '@f0': {
-                function: ({ data }) => data % 2 == 0,
+    let project = emptyProject()
+    project = await project.parseDag(
+        ['timer(t0,{"name":"1s"})', 'filter(f0,{@f0})', 'map(m0)'],
+        {
+            configurations: {
+                '@f0': {
+                    function: ({ data }) => data % 2 == 0,
+                },
             },
         },
-    })
-    const { project } = repl.addView({
+    )
+    project = project.addView({
         viewId: 'Test',
         implementation: (project) => {
             const obs = project.getObservable({
@@ -235,10 +192,8 @@ test('repl with view', async () => {
 })
 
 test('repl misc 0', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    const { project } = await repl.__([
+    let project = emptyProject()
+    project = await project.parseDag([
         ['filter(filter)', 'map(map)', 'mergeMap(m2)'],
         ['of(of)', '#m2'],
     ])
@@ -252,15 +207,12 @@ test('repl misc 0', async () => {
 })
 
 test('multiple steps', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    await repl.__([
+    let project = emptyProject()
+    project = await project.parseDag([
         ['timer(t0,{"name":"1s"})', 'filter(f0)', 'map(m0)', 'mergeMap(m1)'],
     ])
-    await repl.__(['of(of)'])
-    const { project } = await repl.__(['#of', '#m1'])
+    project = await project.parseDag(['of(of)'])
+    project = await project.parseDag(['#of', '#m1'])
     const modules = project.main.modules
     expect(modules).toHaveLength(5)
     const connections = project.main.connections
@@ -269,11 +221,8 @@ test('multiple steps', async () => {
 })
 
 test('repl misc 1', async () => {
-    const repl = new Repl({
-        environment: new TestEnvironment({ toolboxes: [toolbox] }),
-    })
-    expect(repl).toBeTruthy()
-    const { project } = await repl.__(['filter>0', 'a0=>sphere>0'], {
+    let project = emptyProject()
+    project = await project.parseDag(['filter>0', 'a0=>sphere>0'], {
         adaptors: {
             a0: ({ data }) => ({ data, configuration: {} }),
         },

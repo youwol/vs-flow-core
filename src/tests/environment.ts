@@ -9,7 +9,7 @@ import { BehaviorSubject } from 'rxjs'
 
 export class TestEnvironment implements IEnvironment {
     public readonly toolboxes$ = new BehaviorSubject<ToolBox[]>([])
-
+    public readonly viewsFactory = []
     constructor(params: { toolboxes: ToolBox[] }) {
         Object.assign(this, params)
         this.toolboxes$.next(params.toolboxes)
@@ -39,7 +39,7 @@ export class TestEnvironment implements IEnvironment {
                 return module.declaration.typeId == typeId
             })
         return (await module.getInstance({
-            fwdParams: { uid: moduleId, configuration },
+            fwdParams: { uid: moduleId, configuration, environment: this },
             environment: this,
         })) as T & Modules.Implementation
     }

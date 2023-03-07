@@ -1,15 +1,10 @@
-import { TestEnvironment } from './environment'
-import { toolbox } from './toolbox'
-import { FlowNode, ProjectState } from '../lib/project'
-import { Workflow } from '../lib/workflows'
+import { FlowNode } from '../lib/project'
+import { RxjsFilter } from '../toolboxes/rxjs'
+import { emptyProject } from './test.utils'
 
 test('project', async () => {
-    const environment = new TestEnvironment({ toolboxes: [toolbox] })
-    let project = new ProjectState({
-        main: new Workflow(),
-        macros: [],
-        environment,
-    })
+    let project = emptyProject()
+    const environment = project.environment
     expect(project).toBeTruthy()
     const module = await environment.instantiateModule({
         typeId: 'sphere',
@@ -17,17 +12,13 @@ test('project', async () => {
 
     project = project.addFlows([
         [new FlowNode({ module, input: 'input$', output: 'output$' })],
-    ]).project
+    ])
     expect(project.main.modules).toHaveLength(1)
 })
 
 test('project2', async () => {
-    const environment = new TestEnvironment({ toolboxes: [toolbox] })
-    let project = new ProjectState({
-        main: new Workflow(),
-        macros: [],
-        environment,
-    })
+    let project = emptyProject()
+    const environment = project.environment
     expect(project).toBeTruthy()
     const sphere = await environment.instantiateModule({
         typeId: 'sphere',
@@ -49,18 +40,14 @@ test('project2', async () => {
                 output: 'output$',
             }),
         ],
-    ]).project
+    ])
     expect(project.main.modules).toHaveLength(2)
     expect(project.main.connections).toHaveLength(1)
 })
 
 test('project layer simple', async () => {
-    const environment = new TestEnvironment({ toolboxes: [toolbox] })
-    let project = new ProjectState({
-        main: new Workflow(),
-        macros: [],
-        environment,
-    })
+    let project = emptyProject()
+    const environment = project.environment
     expect(project).toBeTruthy()
     const m0 = await environment.instantiateModule({
         moduleId: 'm0',
@@ -102,7 +89,7 @@ test('project layer simple', async () => {
                 output: 'output$',
             }),
         ],
-    ]).project
+    ])
     expect(project.main.modules).toHaveLength(4)
     expect(project.main.connections).toHaveLength(3)
     expect(project.main.rootLayer.moduleIds).toHaveLength(4)
@@ -110,7 +97,7 @@ test('project layer simple', async () => {
     project = project.addLayer({
         layerId: 'foo',
         uids: ['m1', 'm2', 'm3'],
-    }).project
+    })
     expect(project.main.rootLayer.moduleIds).toHaveLength(1)
     expect(project.main.rootLayer.children).toHaveLength(1)
     expect(project.main.rootLayer.children[0].uid).toBe('foo')
@@ -121,7 +108,7 @@ test('project layer simple', async () => {
         parentLayerId: 'foo',
         layerId: 'bar',
         uids: ['m2', 'm3'],
-    }).project
+    })
     expect(project.main.rootLayer.moduleIds).toHaveLength(1)
     expect(project.main.rootLayer.children).toHaveLength(1)
     expect(project.main.rootLayer.children[0].uid).toBe('foo')
@@ -135,4 +122,12 @@ test('project layer simple', async () => {
     expect(
         project.main.rootLayer.children[0].children[0].children,
     ).toHaveLength(0)
+})
+
+test('import', async () => {
+    let project = emptyProject()
+    project = await project.import('rxjs')
+    project = await project.parseDag(['filter'], {})
+    expect(project.main.modules).toHaveLength(1)
+    expect(project.main.modules[0]).toBeInstanceOf(RxjsFilter)
 })
