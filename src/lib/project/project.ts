@@ -4,7 +4,7 @@ import { Modules } from '..'
 import { ApiTrait } from '../modules/traits'
 import { InputMessage } from '../modules'
 import { VirtualDOM } from '@youwol/flux-view'
-import { addFlows, parseDag } from './parsing-utils'
+import { parseDag } from './parsing-utils'
 
 export type Macro = Workflow & ApiTrait
 
@@ -99,23 +99,33 @@ export class ProjectState {
     }
 
     async parseDag(
-        flows: string[] | string[][],
-        options: {
-            adaptors?: { [k: string]: ({ data, context }) => InputMessage }
-            configurations?: { [k: string]: unknown }
-        } = {},
+        flows: string | string[],
+        options: { [k: string]: unknown } = {},
     ) {
-        const branches = await parseDag(
+        const { modules, connections } = await parseDag(
             this.main.modules,
             this.environment,
             flows,
             options,
         )
-        return addFlows(this, branches)
-    }
-
-    addFlows(flows: FlowNode[][]): ProjectState {
-        return addFlows(this, flows)
+        const modulesSet = new Set([...this.main.modules, ...modules])
+        const root = this.main.rootLayer
+        const rootModuleIds = new Set([
+            ...root.moduleIds,
+            ...modules.map((m) => m.uid),
+        ])
+        return new ProjectState({
+            ...this,
+            main: new Workflow({
+                modules: [...modulesSet],
+                connections: [...this.main.connections, ...connections],
+                rootLayer: new Layer({
+                    uid: this.main.rootLayer.uid,
+                    children: this.main.rootLayer.children,
+                    moduleIds: [...rootModuleIds],
+                }),
+            }),
+        })
     }
 
     addLayer({
