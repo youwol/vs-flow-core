@@ -1,7 +1,7 @@
 import { RxjsFilter } from '../toolboxes/rxjs'
 import { Sphere } from './modules-implementation/sphere.module'
-import { attr$ } from '@youwol/flux-view'
 import { emptyProject } from './test.utils'
+import { attr$ } from '@youwol/flux-view'
 
 test('one module', async () => {
     let project = emptyProject()
@@ -17,7 +17,7 @@ test('one module', async () => {
 
 test('only modules', async () => {
     let project = emptyProject()
-    project = await project.parseDag(['filter', 'sphere'])
+    project = await project.parseDag('(filter)>>(sphere)')
     const [modules, connections] = [
         project.main.modules,
         project.main.connections,
@@ -33,7 +33,7 @@ test('only modules', async () => {
 
 test('modules with IO', async () => {
     let project = emptyProject()
-    project = await project.parseDag(['filter>0', '0>sphere>0'])
+    project = await project.parseDag('(filter)0>>0(sphere)')
     const [modules, connections] = [
         project.main.modules,
         project.main.connections,
@@ -46,9 +46,9 @@ test('modules with IO', async () => {
 
 test('repl modules with IO & adaptor', async () => {
     let project = emptyProject()
-    project = await project.parseDag(['filter>0', 'a0=0>sphere>0'], {
-        adaptors: {
-            a0: ({ data }) => ({ data, configuration: {} }),
+    project = await project.parseDag('(filter)0>#c0>0(sphere)', {
+        c0: {
+            adaptor: ({ data }) => ({ data, configuration: {} }),
         },
     })
     const [modules, connections] = [
@@ -68,8 +68,8 @@ test('repl modules with IO & adaptor', async () => {
 test('repl modules with IO & name', async () => {
     let project = emptyProject()
     project = await project.parseDag([
-        ['filter>0', '0>sphere(s0)>0'],
-        ['filter>0', '0>#s0'],
+        '(filter)0>>0(sphere#s0)>0',
+        '(filter)0>>0(#s0)',
     ])
     const [modules, connections] = [
         project.main.modules,
@@ -89,54 +89,8 @@ test('repl modules with IO & name', async () => {
 
 test('repl modules with config', async () => {
     let project = emptyProject()
-    project = await project.parseDag([
-        'sphere(s0,{"transform":{"translation":{"x":4}}})',
-    ])
-    const modules = project.main.modules
-    expect(modules).toHaveLength(1)
-    expect(modules[0].configuration).toEqual({
-        name: 'Sphere',
-        radius: 0,
-        transform: { translation: { x: 4, y: 0, z: 0 } },
-    })
-})
-
-test('repl modules with config 2', async () => {
-    let project = emptyProject()
-    project = await project.parseDag([
-        'sphere({"transform":{"translation":{"x":4}}})',
-    ])
-    const modules = project.main.modules
-    expect(modules).toHaveLength(1)
-    expect(modules[0].configuration).toEqual({
-        name: 'Sphere',
-        radius: 0,
-        transform: { translation: { x: 4, y: 0, z: 0 } },
-    })
-})
-
-test('repl modules with config 3', async () => {
-    let project = emptyProject()
-    project = await project.parseDag(['sphere({@c})'], {
-        configurations: {
-            '@c': { transform: { translation: { x: 4 } } },
-        },
-    })
-    const modules = project.main.modules
-    expect(modules).toHaveLength(1)
-    expect(modules[0].configuration).toEqual({
-        name: 'Sphere',
-        radius: 0,
-        transform: { translation: { x: 4, y: 0, z: 0 } },
-    })
-})
-
-test('repl modules with config 4', async () => {
-    let project = emptyProject()
-    project = await project.parseDag(['sphere(s0,{@c})'], {
-        configurations: {
-            '@c': { transform: { translation: { x: 4 } } },
-        },
+    project = await project.parseDag('(sphere#s0)', {
+        s0: { transform: { translation: { x: 4 } } },
     })
     const modules = project.main.modules
     expect(modules).toHaveLength(1)
@@ -150,8 +104,8 @@ test('repl modules with config 4', async () => {
 test('repl organize', async () => {
     let project = emptyProject()
     project = await project.parseDag([
-        ['filter(filter)', 'map(map)', 'mergeMap(m2)'],
-        ['of(of)', '#m2'],
+        '(filter#filter)>>(map#map)>>(mergeMap#m2)',
+        '(of#of)>>#m2',
     ])
     project = project.organize([{ layerId: 'foo', uids: ['filter', 'map'] }])
     expect(project.main.rootLayer.moduleIds).toEqual(['m2', 'of'])
@@ -165,16 +119,12 @@ test('repl organize', async () => {
 
 test('repl with view', async () => {
     let project = emptyProject()
-    project = await project.parseDag(
-        ['timer(t0,{"name":"1s"})', 'filter(f0,{@f0})', 'map(m0)'],
-        {
-            configurations: {
-                '@f0': {
-                    function: ({ data }) => data % 2 == 0,
-                },
-            },
+    project = await project.parseDag('(timer#t0)>>(filter#f0)>>(map#m0)', {
+        t0: { name: '1s' },
+        f0: {
+            function: ({ data }) => data % 2 == 0,
         },
-    )
+    })
     project = project.addView({
         viewId: 'Test',
         implementation: (project) => {
@@ -194,8 +144,8 @@ test('repl with view', async () => {
 test('repl misc 0', async () => {
     let project = emptyProject()
     project = await project.parseDag([
-        ['filter(filter)', 'map(map)', 'mergeMap(m2)'],
-        ['of(of)', '#m2'],
+        '(filter#filter)>>(map#map)>>(mergeMap#m2)',
+        '(of#of)>>(#m2)',
     ])
 
     const [modules, connections] = [
@@ -209,10 +159,10 @@ test('repl misc 0', async () => {
 test('multiple steps', async () => {
     let project = emptyProject()
     project = await project.parseDag([
-        ['timer(t0,{"name":"1s"})', 'filter(f0)', 'map(m0)', 'mergeMap(m1)'],
+        '(timer#t0)>>(filter#f0)>>(map#m0)>>(mergeMap#m1)',
     ])
-    project = await project.parseDag(['of(of)'])
-    project = await project.parseDag(['#of', '#m1'])
+    project = await project.parseDag('(of#of)')
+    project = await project.parseDag('(#of)>>(#m1)')
     const modules = project.main.modules
     expect(modules).toHaveLength(5)
     const connections = project.main.connections
@@ -222,9 +172,9 @@ test('multiple steps', async () => {
 
 test('repl misc 1', async () => {
     let project = emptyProject()
-    project = await project.parseDag(['filter>0', 'a0=>sphere>0'], {
-        adaptors: {
-            a0: ({ data }) => ({ data, configuration: {} }),
+    project = await project.parseDag('(filter)0>#c0>(sphere)', {
+        c0: {
+            adaptor: ({ data }) => ({ data, configuration: {} }),
         },
     })
     const connections = project.main.connections

@@ -38,6 +38,9 @@ export class TestEnvironment implements IEnvironment {
             .find((module: Modules.Module<Implementation>) => {
                 return module.declaration.typeId == typeId
             })
+        if (!module) {
+            console.error(`Can not find module of type ${typeId}`)
+        }
         return (await module.getInstance({
             fwdParams: { uid: moduleId, configuration, environment: this },
             environment: this,
