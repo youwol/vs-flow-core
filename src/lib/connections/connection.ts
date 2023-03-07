@@ -65,10 +65,12 @@ export class Connection
     })
 
     constructor({
+        uid,
         start,
         end,
         configuration,
     }: {
+        uid?: string
         start: Slot
         end: Slot
         configuration: { adaptor?: Adaptor }
@@ -85,7 +87,9 @@ export class Connection
             }),
         })
 
-        this.uid = `${this.start.slotId}@${this.start.moduleId}-${this.end.slotId}@${this.end.moduleId}`
+        this.uid =
+            uid ||
+            `${this.start.slotId}@${this.start.moduleId}-${this.end.slotId}@${this.end.moduleId}`
     }
 
     connect({ apiFinder }: { apiFinder: (uid: string) => ApiTrait }) {
