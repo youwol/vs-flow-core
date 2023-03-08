@@ -248,17 +248,22 @@ export class AppState {
     }> {
         const index = this.cells$.value.indexOf(cell)
         const executingCells = this.cells$.value.slice(0, index + 1)
+        const remainingCells = this.cells$.value.slice(index + 1)
+
         const batch = new BatchCells({
             cells: executingCells,
             projectsStore$: this.projectByCells$,
         })
         return batch.execute(this.emptyProject).then((project) => {
             this.project$.next(project)
+            const newHistory = new Map(this.projectByCells$.value)
+            remainingCells.forEach((cell) => {
+                newHistory.delete(cell)
+            })
             if (index < this.cells$.value.length - 1) {
-                const newHistory = new Map(this.projectByCells$.value)
                 newHistory.set(this.cells$.value[index + 1], project)
-                this.projectByCells$.next(newHistory)
             }
+            this.projectByCells$.next(newHistory)
             return {
                 history: this.projectByCells$.value,
                 project,
