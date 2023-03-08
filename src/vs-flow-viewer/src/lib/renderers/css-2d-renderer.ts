@@ -11,6 +11,7 @@ class CSS2DObject extends Object3D {
         this.element.style.position = 'absolute'
         this.element.style.userSelect = 'none'
         this.element.setAttribute('draggable', 'false')
+        this.element.classList.add('css-2d-object')
         this['addEventListener']('removed', function () {
             this.traverse(function (object) {
                 if (

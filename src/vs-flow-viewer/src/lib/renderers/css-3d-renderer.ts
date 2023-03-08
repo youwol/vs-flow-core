@@ -21,7 +21,7 @@ class CSS3DObject extends Object3D {
         this.element.style.position = 'absolute'
         this.element.style.pointerEvents = 'auto'
         this.element.style.userSelect = 'none'
-
+        this.element.classList.add('css-3d-object')
         this.element.setAttribute('draggable', 'false')
 
         this.addEventListener('removed', function () {
