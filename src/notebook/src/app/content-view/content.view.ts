@@ -1,35 +1,45 @@
 import {
     attr$,
+    child$,
     children$,
     childrenFromStore$,
     VirtualDOM,
 } from '@youwol/flux-view'
 
-import { Workflow, ProjectNode, View } from '../side-nav-tabs'
+import { ProjectNode } from '../side-nav-tabs'
 
-import { AppState } from '../app.state'
-import { WorkflowTab } from './workflow.tab'
+import { AppState, TabIdentifier } from '../app.state'
 import { ProjectState } from '../../../../lib/project'
-import { ViewTab } from './view.view'
 import { ImmutableTree } from '@youwol/fv-tree'
+import { WorkflowTab } from './workflow.tab'
+import { filter, map, take } from 'rxjs/operators'
+import { ViewTab } from './view.view'
+import { combineLatest } from 'rxjs'
 
-function viewFactory(
-    node: ProjectNode,
-    state: AppState,
-    project: ProjectState,
-) {
-    if (node instanceof Workflow) {
+function viewFactory(nodeId: TabIdentifier, state: AppState) {
+    if (nodeId.category == 'Workflow') {
         return new WorkflowTab({
-            project,
             state,
         })
     }
-    if (node instanceof View) {
-        return new ViewTab({
-            project,
-            state,
-            node,
-        })
+
+    if (nodeId.category == 'View') {
+        return child$(
+            combineLatest([state.project$, state.projectExplorerState$]).pipe(
+                map(([project, explorer]) => ({
+                    node: explorer.getNode(nodeId.id),
+                    project,
+                })),
+                filter(({ node }) => node != undefined),
+            ),
+            ({ project, node }) => {
+                return new ViewTab({
+                    project,
+                    state,
+                    node,
+                })
+            },
+        )
     }
 }
 /**
@@ -62,11 +72,7 @@ export class ContentView implements VirtualDOM {
      */
     public readonly children
 
-    constructor(params: {
-        state: AppState
-        project: ProjectState
-        explorer: ImmutableTree.State<ProjectNode>
-    }) {
+    constructor(params: { state: AppState }) {
         Object.assign(this, params)
 
         this.children = [
@@ -76,16 +82,21 @@ export class ContentView implements VirtualDOM {
                 style: {
                     minHeight: '0px',
                 },
-                children: childrenFromStore$(this.state.openTabs$, (nodeId) => {
-                    const node = this.explorer.getNode(nodeId)
-                    const view = viewFactory(node, this.state, this.project)
-                    return {
-                        class: attr$(this.state.selectedTab$, (selected) =>
-                            selected == nodeId ? 'w-100 h-100' : 'd-none',
-                        ),
-                        children: [view],
-                    }
-                }),
+                children: childrenFromStore$(
+                    this.state.openTabs$,
+                    (nodeId) => {
+                        const view = viewFactory(nodeId, this.state)
+                        return {
+                            class: attr$(this.state.selectedTab$, (selected) =>
+                                selected.id == nodeId.id
+                                    ? 'w-100 h-100'
+                                    : 'd-none',
+                            ),
+                            children: [view],
+                        }
+                    },
+                    { comparisonOperator: (e0, e1) => e0.id == e1.id },
+                ),
             },
         ]
     }
@@ -115,7 +126,7 @@ export class FilesHeaderView implements VirtualDOM {
                     class: attr$(
                         this.appState.selectedTab$,
                         (selected): string =>
-                            selected == tabId
+                            selected.id == tabId.id
                                 ? 'fv-text-focus fv-bg-background'
                                 : 'fv-text-primary fv-bg-background-alt',
                         {
@@ -129,7 +140,7 @@ export class FilesHeaderView implements VirtualDOM {
                         },*/
                         { class: 'mx-1' },
                         {
-                            innerText: `${tabId}`,
+                            innerText: tabId.name,
                         },
                         { class: 'mx-1' },
                         /*{
@@ -141,7 +152,12 @@ export class FilesHeaderView implements VirtualDOM {
                         },*/
                     ],
                     onclick: () => {
-                        this.appState.openTab(tabId)
+                        this.appState.projectExplorerState$
+                            .pipe(take(1))
+                            .subscribe((explorer) => {
+                                const node = explorer.getNode(tabId.id)
+                                this.appState.openTab(node)
+                            })
                     },
                 }
             })

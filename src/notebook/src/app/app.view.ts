@@ -1,9 +1,8 @@
-import { child$, VirtualDOM } from '@youwol/flux-view'
+import { VirtualDOM } from '@youwol/flux-view'
 import { AppState } from './app.state'
 import { TopBannerView } from './top-banner'
 import { DockableTabs } from '@youwol/fv-tabs'
 import { ContentView } from './content-view/content.view'
-import { map, withLatestFrom } from 'rxjs/operators'
 /**
  * @category View
  * @Category Entry Point
@@ -92,20 +91,9 @@ export class MainContentView implements VirtualDOM {
                             minHeight: '0px',
                         },
                         children: [
-                            child$(
-                                this.state.project$.pipe(
-                                    map((project) => project),
-                                    withLatestFrom(
-                                        this.state.projectExplorerState$,
-                                    ),
-                                ),
-                                ([project, explorer]) =>
-                                    new ContentView({
-                                        state: this.state,
-                                        project,
-                                        explorer,
-                                    }),
-                            ),
+                            new ContentView({
+                                state: this.state,
+                            }),
                         ],
                     },
                     bottomSideNavView,

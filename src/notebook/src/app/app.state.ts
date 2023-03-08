@@ -12,7 +12,6 @@ import {
     ProjectTab,
     ReplTab,
     ToolboxesTab,
-    ProjectNode,
     NodeProjectBase,
     ModuleInstance,
     createProjectRootNode,
@@ -40,6 +39,12 @@ import { ProjectState, BatchCells } from '../../../lib/project'
 import { Workflow as WfModel } from '../../../lib/workflows'
 
 type ProjectByCells = Map<NotebookCellTrait, ProjectState>
+
+export type TabIdentifier = {
+    category: string
+    id: string
+    name: string
+}
 /**
  * @category State
  * @category Entry Point
@@ -90,12 +95,12 @@ export class AppState {
     /**
      * @group Observable
      */
-    public readonly openTabs$ = new BehaviorSubject<string[]>([])
+    public readonly openTabs$ = new BehaviorSubject<TabIdentifier[]>([])
 
     /**
      * @group Observables
      */
-    public readonly selectedTab$ = new BehaviorSubject<string>(undefined)
+    public readonly selectedTab$ = new BehaviorSubject<TabIdentifier>(undefined)
 
     /**
      *
@@ -191,6 +196,11 @@ export class AppState {
             }),
             tap(({ explorer, rootNode }) => {
                 explorer.selectedNode$.next(rootNode.children[0])
+                this.openTabs$.value.forEach((tab) => {
+                    if (!explorer.getNode(tab.id)) {
+                        this.closeTab(tab)
+                    }
+                })
             }),
             map(({ explorer }) => explorer),
             shareReplay({ bufferSize: 1, refCount: true }),
@@ -201,10 +211,10 @@ export class AppState {
                 node instanceof ModuleInstance &&
                     this.selectedUid$.next(node.id)
                 if (node instanceof Workflow) {
-                    this.openTab(node.id)
+                    this.openTab(node)
                 }
                 if (node instanceof View) {
-                    this.openTab(node.id)
+                    this.openTab(node)
                 }
             })
         combineLatest([
@@ -256,20 +266,25 @@ export class AppState {
         })
     }
 
-    openTab(nodeId: string) {
+    openTab(node: NodeProjectBase) {
         const opened = this.openTabs$.value
-        if (!opened.includes(nodeId)) {
+        const nodeId = {
+            id: node.id,
+            category: node.category,
+            name: node.name,
+        }
+        if (!opened.find((n) => n.id == nodeId.id)) {
             this.openTabs$.next([...opened, nodeId])
         }
         this.selectedTab$.next(nodeId)
     }
 
-    closeTab(node: ProjectNode) {
-        const opened = this.openTabs$.value.filter((v) => v != node.id)
+    closeTab(node: TabIdentifier) {
+        const opened = this.openTabs$.value.filter(({ id }) => id != node.id)
         if (opened.length != this.openTabs$.value.length) {
             this.openTabs$.next(opened)
         }
-        if (this.selectedTab$.value == node.id) {
+        if (this.selectedTab$.value.id == node.id) {
             this.selectedTab$.next(opened[0])
         }
     }
