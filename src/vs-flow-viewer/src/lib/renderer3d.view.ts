@@ -1,31 +1,27 @@
 import { VirtualDOM } from '@youwol/flux-view'
 import { Vector3 } from 'three'
 
-import { renderDag } from './dag'
 import { ProjectState } from '../../../lib/project'
 import { Environment3D, SelectableObject3D } from './environment3d'
-import { ReplaySubject } from 'rxjs'
+import { Observable, ReplaySubject } from 'rxjs'
 
 export class Renderer3DView {
     public readonly class = 'h-100 w-100'
     public readonly style = {
         position: 'relative',
     }
-    public readonly project: ProjectState
+    public readonly project$: Observable<ProjectState>
     public readonly children: VirtualDOM[]
     public readonly entitiesPosition: { [_k: string]: Vector3 }
 
     public environment3D: Environment3D
     public environment3D$: ReplaySubject<Environment3D>
     constructor(params: {
-        project: ProjectState
+        project$: Observable<ProjectState>
         uidSelected: ReplaySubject<string>
     }) {
         Object.assign(this, params)
-        this.entitiesPosition =
-            this.project.main.modules.length > 0
-                ? renderDag(this.project, this.project.main.rootLayer)
-                : {}
+
         this.environment3D$ = new ReplaySubject<Environment3D>(1)
         this.children = [
             {
@@ -41,9 +37,8 @@ export class Renderer3DView {
                             ) {
                                 this.environment3D = new Environment3D({
                                     htmlElementContainer: htmlElement,
-                                    project: this.project,
+                                    project$: this.project$,
                                     uidSelected$: params.uidSelected,
-                                    layerId: this.project.main.rootLayer.uid,
                                 })
                                 this.environment3D$.next(this.environment3D)
                                 animate(this.environment3D)

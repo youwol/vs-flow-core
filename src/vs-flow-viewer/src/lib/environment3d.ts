@@ -63,32 +63,37 @@ export class Dynamic3dContent {
     static customElements: { [k: string]: CustomElement<VirtualDOM> } = {}
     public readonly environment3d: Environment3D
     public readonly project: ProjectState
-    public readonly entitiesPosition: { [k: string]: Vector3 }
-    public readonly layerOrganizer: LayerOrganizer
+    public readonly layerId: string
     public readonly modules: ModuleObject3d[]
     public readonly groups: GroupObject3d[]
     public readonly intraConnection: ConnectionObject3d[]
     public readonly interConnection: PseudoConnectionObject3d[]
-
+    public readonly entitiesPosition: { [k: string]: Vector3 }
     public lights: Object3D[]
     public ground: Object3D[]
 
     constructor(params: {
         project: ProjectState
         uidSelected$: ReplaySubject<string>
-        layerOrganizer: LayerOrganizer
-        entitiesPosition: { [k: string]: Vector3 }
+        layerId: string
         environment3d: Environment3D
     }) {
         Object.assign(this, params)
-        this.modules = this.layerOrganizer.modules.map((module) => {
+        const layerOrganizer = new LayerOrganizer({
+            project: this.project,
+            layerId: this.layerId,
+        })
+        const dagData = layerOrganizer.dagData()
+        this.entitiesPosition = computeCoordinates(dagData)
+
+        this.modules = layerOrganizer.modules.map((module) => {
             return new ModuleObject3d({
                 module: module,
                 entitiesPositions: this.entitiesPosition,
                 uidSelected$: params.uidSelected$,
             })
         })
-        this.groups = this.layerOrganizer.groups.map((group) => {
+        this.groups = layerOrganizer.groups.map((group) => {
             return new GroupObject3d({
                 project: this.project,
                 environment3d: this.environment3d,
@@ -97,14 +102,14 @@ export class Dynamic3dContent {
                 uidSelected$: params.uidSelected$,
             })
         })
-        this.intraConnection = this.layerOrganizer.intraConnections.map((c) => {
+        this.intraConnection = layerOrganizer.intraConnections.map((c) => {
             return new ConnectionObject3d({
                 connection: c.connection,
                 positions: this.entitiesPosition,
                 uidSelected$: params.uidSelected$,
             })
         })
-        this.interConnection = this.layerOrganizer.interConnections.map((c) => {
+        this.interConnection = layerOrganizer.interConnections.map((c) => {
             return new PseudoConnectionObject3d({
                 connection: c.connection,
                 positions: this.entitiesPosition,
@@ -259,10 +264,7 @@ export class LayerOrganizer {
 }
 
 export class Environment3D {
-    public readonly project: ProjectState
-    public readonly layerId: string
-    public readonly entitiesPosition: { [_k: string]: Vector3 }
-    public readonly layerOrganizer: LayerOrganizer
+    public readonly project$: Observable<ProjectState>
     public readonly htmlElementContainer: HTMLDivElement
 
     public readonly rayCaster = new Raycaster()
@@ -283,35 +285,14 @@ export class Environment3D {
     public readonly controls$: Observable<{ controls; camera }>
     constructor(params: {
         htmlElementContainer: HTMLDivElement
-        layerId: string
-        project: ProjectState
+        project$: Observable<ProjectState>
         uidSelected$: ReplaySubject<string>
     }) {
         Object.assign(this, params)
-        this.layerOrganizer = new LayerOrganizer({
-            project: this.project,
-            layerId: this.layerId,
-        })
-        const organizer = new LayerOrganizer({
-            project: this.project,
-            layerId: this.project.main.rootLayer.uid,
-        })
-        const dagData = organizer.dagData()
-        this.entitiesPosition = computeCoordinates(dagData)
         this.scene.background = new THREE.Color(0xaaaaaa)
         this.scene.fog = new THREE.Fog(0x050505, 2000, 3500)
-        const dynamicContent3d = new Dynamic3dContent({
-            project: this.project,
-            uidSelected$: this.uidSelected$,
-            layerOrganizer: this.layerOrganizer,
-            entitiesPosition: this.entitiesPosition,
-            environment3d: this,
-        })
-        dynamicContent3d.addToScene(this.scene)
 
         const { clientWidth, clientHeight } = this.htmlElementContainer
-        this.addSelectables(dynamicContent3d)
-
         this.renderer.shadowMap.enabled = true
         this.renderer.setPixelRatio(window.devicePixelRatio)
 
@@ -380,6 +361,23 @@ export class Environment3D {
             })
             observer.observe(this.htmlElementContainer)
             fitSceneToContent(this.scene, this.camera, this.controls)
+        })
+
+        this.project$.subscribe((project) => {
+            this.scene.clear()
+            this.htmlElementContainer
+                .querySelectorAll('.css-3d-object, .css-2d-object')
+                .forEach((e) => e.remove())
+            const dynamicContent3d = new Dynamic3dContent({
+                project: project,
+                uidSelected$: this.uidSelected$,
+                layerId: project.main.rootLayer.uid,
+                environment3d: this,
+            })
+            dynamicContent3d.addToScene(this.scene)
+
+            fitSceneToContent(this.scene, this.camera, this.controls)
+            this.addSelectables(dynamicContent3d)
         })
     }
 
