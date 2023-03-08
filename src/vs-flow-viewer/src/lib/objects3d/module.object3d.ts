@@ -1,4 +1,5 @@
 import {
+    Group,
     Mesh,
     MeshStandardMaterial,
     SphereBufferGeometry,
@@ -11,7 +12,7 @@ import { CSS3DObject } from '../renderers/css-3d-renderer'
 import { render } from '@youwol/flux-view'
 
 export class ModuleObject3d
-    extends Mesh
+    extends Group
     implements SelectableTrait<Implementation>
 {
     public readonly module: Implementation
@@ -30,6 +31,7 @@ export class ModuleObject3d
         super()
         Object.assign(this, params)
         const position = this.entitiesPositions[this.module.uid]
+        this.position.set(position.x, position.y, position.z)
         const geometry = new SphereBufferGeometry(2, 32, 32)
         this.sphereMaterial = new MeshStandardMaterial({
             color: 0x049ef4,
@@ -38,7 +40,6 @@ export class ModuleObject3d
             emissive: 0x8f0000,
         })
         this.sphere = new Mesh(geometry, this.sphereMaterial)
-        this.sphere.position.set(position.x, position.y, position.z)
         this.sphere.castShadow = true
         const labelDiv = document.createElement('div')
         labelDiv.className = 'label'
@@ -47,7 +48,7 @@ export class ModuleObject3d
         labelDiv.style.fontSize = '4px'
         const label = new CSS3DObject(labelDiv)
         label.position.set(0, 0, 0)
-        this.sphere.add(label)
+        this.add(label)
         label.layers.set(0)
         const builderView = this.module.builderView(this.module)
         if (builderView) {
@@ -58,7 +59,7 @@ export class ModuleObject3d
             this.sphere.add(obj)
             obj.layers.set(0)
         }
-        this.children = [this.sphere]
+        this.add(this.sphere)
         this.sphere.name = `#${this.module.uid}`
 
         this.selector = new Selector<Implementation>({
