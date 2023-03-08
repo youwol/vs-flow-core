@@ -11,12 +11,7 @@ import { SelectableTrait, Selector } from './traits'
 import { ReplaySubject } from 'rxjs'
 import { Layer } from '../../../../lib/workflows'
 import { ProjectState } from '../../../../lib/project'
-import { computeCoordinates } from '../dag'
-import {
-    Dynamic3dContent,
-    Environment3D,
-    LayerOrganizer,
-} from '../environment3d'
+import { Dynamic3dContent, Environment3D } from '../environment3d'
 import { ConnectionObject3d } from './connection.object3d'
 import { CSS3DObject } from '../renderers/css-3d-renderer'
 
@@ -81,19 +76,13 @@ export class GroupObject3d extends Mesh implements SelectableTrait<Layer> {
         if (this.groupSubWf3d.children.length > 0) {
             return
         }
-        const layerOrganizer = new LayerOrganizer({
-            project: this.project,
-            layerId: this.group.uid,
-        })
-        const dagData = layerOrganizer.dagData()
-        const entitiesPosition = computeCoordinates(dagData, -100)
         const dynamicContent3d = new Dynamic3dContent({
             project: this.project,
             uidSelected$: this.uidSelected$,
-            layerOrganizer,
-            entitiesPosition: entitiesPosition,
+            layerId: this.group.uid,
             environment3d: this.environment3d,
         })
+        const entitiesPosition = dynamicContent3d.entitiesPosition
         dynamicContent3d.addToScene(this.groupSubWf3d)
         this.groupSubWf3d.add(new BoxHelper(this.groupSubWf3d, 0xffff00))
         this.groupSubWf3d.add(new BoxHelper(this.sphere, 0xffff00))
