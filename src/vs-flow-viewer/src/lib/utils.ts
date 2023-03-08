@@ -9,7 +9,7 @@ export function getChildrenGeometries(children) {
             if (child instanceof Group) {
                 return getChildrenGeometries(child.children).reduce(
                     (acc, e) => acc.concat(e),
-                    [],
+                    [child],
                 )
             }
             return [child]
