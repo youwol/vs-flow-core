@@ -341,6 +341,12 @@ export class Environment3D {
 
         setTimeout(() => {
             const observer = new window['ResizeObserver'](() => {
+                if (
+                    this.htmlElementContainer.clientWidth == 0 ||
+                    this.htmlElementContainer.clientHeight == 0
+                ) {
+                    return
+                }
                 this.renderer.setSize(
                     this.htmlElementContainer.clientWidth,
                     this.htmlElementContainer.clientHeight,
