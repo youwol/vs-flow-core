@@ -11,6 +11,7 @@ export class GroundObject3d extends Mesh {
         Object.assign(this, params)
         if (this.selectables.length == 0) {
             this.children = [new GridHelper(10, 10)]
+            return
         }
         const bbox = getBoundingBox(this.selectables)
         const size = new Vector3()
