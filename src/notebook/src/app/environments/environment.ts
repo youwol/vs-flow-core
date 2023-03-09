@@ -3,6 +3,10 @@ import { toolboxes } from '../../../../toolboxes'
 import { BehaviorSubject } from 'rxjs'
 import { ObjectJs } from '@youwol/fv-tree'
 import * as FluxView from '@youwol/flux-view'
+import { VirtualDOM } from '@youwol/flux-view'
+import { ExecutionJournal } from '../../../../lib/modules/traits'
+import { installJournalModule } from '@youwol/logging'
+import * as cdnClient from '@youwol/cdn-client'
 
 export class Environment implements IEnvironment {
     public readonly toolboxes$ = new BehaviorSubject<ToolBox[]>([])
@@ -18,7 +22,24 @@ export class Environment implements IEnvironment {
                     title: ' ',
                     data,
                 })
-                return FluxView.render(new ObjectJs.View({ state }))
+                return new ObjectJs.View({ state }) as VirtualDOM
+            },
+        },
+        {
+            name: 'ExecutionJournal',
+            description: 'ExecutionJournal view',
+            isCompatible: (d) => d instanceof ExecutionJournal,
+            view: (data: ExecutionJournal) => {
+                return installJournalModule(cdnClient).then((module) => {
+                    const state = new module.JournalState({
+                        journal: {
+                            title: "Module's Journal",
+                            abstract: '',
+                            pages: data.pages,
+                        },
+                    })
+                    return new module.JournalView({ state })
+                })
             },
         },
     ]
