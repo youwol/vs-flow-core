@@ -3,6 +3,7 @@ import { Implementation } from './modules'
 import { UidTrait } from './modules/traits'
 import { JsonMap } from './connections'
 import { BehaviorSubject } from 'rxjs'
+import { Journal } from '@youwol/logging'
 
 export class ToolBox implements UidTrait {
     public readonly modules: Modules.Module<Implementation>[]
@@ -20,12 +21,7 @@ export class ToolBox implements UidTrait {
 
 export interface IEnvironment {
     toolboxes$: BehaviorSubject<ToolBox[]>
-    viewsFactory: {
-        name: string
-        description?: string
-        isCompatible: (data: unknown) => boolean
-        view: (data: unknown) => HTMLElement
-    }[]
+    viewsFactory: Journal.DataViewsFactory
 
     instantiateModule<T>({
         typeId,

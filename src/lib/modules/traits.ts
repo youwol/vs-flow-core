@@ -112,8 +112,11 @@ export interface ConfigurableTrait<TSchema extends Schema> {
     configuration: { [k: string]: unknown }
 }
 
-export class ExecutionJournal {
-    public pages: Journal[] = []
+export class ExecutionJournal implements Journal.Journal {
+    public readonly title = 'Execution Journal'
+    public readonly abstract = ''
+
+    public pages: Journal.Page[] = []
     public readonly logChannels: LogChannel[] = []
 
     constructor(params: { logsChannels?: LogChannel[] }) {
@@ -133,7 +136,7 @@ export class ExecutionJournal {
 
         this.pages = this.pages
             .filter((j) => j.title != title)
-            .concat([new Journal({ title, abstract, entryPoint: context })])
+            .concat([{ title, abstract, entryPoint: context }])
         return context
     }
 }

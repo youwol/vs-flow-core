@@ -1,5 +1,5 @@
 import { BehaviorSubject, from, ReplaySubject } from 'rxjs'
-import { VirtualDOM } from '@youwol/flux-view'
+import { child$, VirtualDOM } from '@youwol/flux-view'
 import { ProjectState } from './project'
 import { IEnvironment } from '../environment'
 import { JsCode } from '../modules/configurations/attributes'
@@ -58,6 +58,12 @@ export class ProjectCell implements CellTrait {
             })
             .flat()
         from(allViews).subscribe((view) => {
+            if (view instanceof Promise) {
+                this.outputs$.next({
+                    children: [child$(from(view), (v) => v)],
+                })
+                return
+            }
             this.outputs$.next(view)
         })
     }
