@@ -32,7 +32,9 @@ template = Template(
             includedInBundle={}
         ),
         devTime={
-            '@youwol/flux-view': '^1.0.3'
+            '@youwol/flux-view': '^1.0.3',
+            # required because auxiliary module @youwol/logging/journal needs it at compile time
+            '@youwol/fv-tree': '^0.2.3'
         }
     ),
     userGuide=True,
