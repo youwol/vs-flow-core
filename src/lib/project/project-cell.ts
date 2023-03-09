@@ -4,10 +4,11 @@ import { ProjectState } from './project'
 import { IEnvironment } from '../environment'
 import { JsCode } from '../modules/configurations/attributes'
 
-export type CellFunction = (
-    project: ProjectState,
-    cell: ProjectCell,
-) => Promise<ProjectState>
+export type CellFunction = (d: {
+    project: ProjectState
+    cell: ProjectCell
+    env: IEnvironment
+}) => Promise<ProjectState>
 
 export interface CellTrait {
     execute(project: ProjectState): Promise<ProjectState>
@@ -24,11 +25,13 @@ export class ProjectCell implements CellTrait {
         Object.assign(this, params)
     }
     execute(project: ProjectState): Promise<ProjectState> {
-        return this.source.execute(project, this).then((project) => {
-            this.outputs$.next({ class: 'fas fa-check fv-text-success' })
-            this.outputs$.complete()
-            return project
-        })
+        return this.source
+            .execute({ project, cell: this, env: project.environment })
+            .then((project) => {
+                this.outputs$.next({ class: 'fas fa-check fv-text-success' })
+                this.outputs$.complete()
+                return project
+            })
     }
 
     display(...args: (VirtualDOM | string)[]) {
