@@ -60,7 +60,7 @@ export class ModuleObject3d
             obj.layers.set(0)
         }
         this.add(this.sphere)
-        this.sphere.name = `#${this.module.uid}`
+        this.name = this.module.uid
 
         this.selector = new Selector<Implementation>({
             entity: this.module,
