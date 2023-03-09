@@ -70,6 +70,7 @@ export class ProjectState {
     public readonly main: Workflow
     public readonly macros: Macro[]
     public readonly views: ViewsStore = {}
+    public readonly wfViews: unknown[] = []
     public readonly environment: IEnvironment
 
     constructor(params: {
@@ -185,6 +186,13 @@ export class ProjectState {
                 ...this.views,
                 [viewId]: implementation,
             },
+        })
+    }
+
+    display(view: unknown): ProjectState {
+        return new ProjectState({
+            ...this,
+            wfViews: [...this.wfViews, view],
         })
     }
 }
