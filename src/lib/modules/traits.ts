@@ -47,7 +47,7 @@ export function moduleConnectors<TSchema extends Schema>(params: {
             ...acc,
             [e.slotId]: e.subject.pipe(
                 map((message: InputMessage<unknown>) => {
-                    const ctx = params.executionJournal.addJournal({
+                    const ctx = params.executionJournal.addPage({
                         title: `Enter slot ${e.slotId}`,
                         userData: message.context,
                     })
@@ -113,14 +113,14 @@ export interface ConfigurableTrait<TSchema extends Schema> {
 }
 
 export class ExecutionJournal {
-    public journals: Journal[] = []
+    public pages: Journal[] = []
     public readonly logChannels: LogChannel[] = []
 
     constructor(params: { logsChannels?: LogChannel[] }) {
         Object.assign(this, params)
     }
 
-    addJournal({
+    addPage({
         title,
         abstract,
         userData,
@@ -131,7 +131,7 @@ export class ExecutionJournal {
     }) {
         const context = new Context(title, userData, this.logChannels)
 
-        this.journals = this.journals
+        this.pages = this.pages
             .filter((j) => j.title != title)
             .concat([new Journal({ title, abstract, entryPoint: context })])
         return context

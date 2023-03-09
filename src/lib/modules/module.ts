@@ -128,7 +128,7 @@ export class DefaultImplementation<TSchema extends Schema = Schema>
         this.journal = new ExecutionJournal({
             logsChannels: fwdParameters.logsChannels || [],
         })
-        const constructorContext = this.journal.addJournal({
+        const constructorContext = this.journal.addPage({
             title: 'constructor',
         })
 
