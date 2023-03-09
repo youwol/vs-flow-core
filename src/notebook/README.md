@@ -1,21 +1,21 @@
-# @youwol/vs-flow-repl
+# @youwol/vsf-notebook
 
-vs-flow REPL
+
 
 This library is part of the hybrid cloud/local ecosystem
 [YouWol](https://platform.youwol.com/applications/@youwol/platform/latest).
 
 ## Links
 
-[Running app.](https://platform.youwol.com/applications/@youwol/vs-flow-repl/latest)
+[Running app.](https://platform.youwol.com/applications/@youwol/vsf-notebook/latest)
 
-[Online user-guide](https://l.youwol.com/doc/@youwol/vs-flow-repl)
+[Online user-guide](https://l.youwol.com/doc/@youwol/vsf-notebook)
 
-[Developers documentation](https://platform.youwol.com/applications/@youwol/cdn-explorer/latest?package=@youwol/vs-flow-repl)
+[Developers documentation](https://platform.youwol.com/applications/@youwol/cdn-explorer/latest?package=@youwol/vsf-notebook)
 
-[Package on npm](https://www.npmjs.com/package/@youwol/vs-flow-repl)
+[Package on npm](https://www.npmjs.com/package/@youwol/vsf-notebook)
 
-[Source on GitHub](https://github.com/youwol/vs-flow-repl)
+[Source on GitHub](https://github.com/youwol/vsf-notebook)
 
 # Installation, Build, Test
 

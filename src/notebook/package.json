@@ -1,9 +1,9 @@
 {
-    "name": "@youwol/vs-flow-repl",
-    "description": "vs-flow-notebook",
+    "name": "@youwol/vsf-notebook",
+    "description": "",
     "version": "0.0.1-wip",
     "author": "greinisch@youwol.com",
-    "homepage": "https://github.com/youwol/vs-flow-repl#README.md",
+    "homepage": "https://github.com/youwol/vsf-notebook#README.md",
     "main": "dist/index.html",
     "types": "src/index.ts",
     "scripts": {
@@ -55,6 +55,9 @@
     },
     "dependencies": {
         "rxjs": "^6.5.5",
+        "@youwol/logging": "^0.1.0",
+        "@youwol/http-clients": "^2.0.5",
+        "@youwol/http-primitives": "^0.1.2",
         "@youwol/flux-view": "^1.1.0",
         "@youwol/cdn-client": "^1.0.2",
         "@youwol/fv-tabs": "^0.2.1",
@@ -70,6 +73,9 @@
     "youwol": {
         "cdnDependencies": {
             "rxjs": "^6.5.5",
+            "@youwol/logging": "^0.1.0",
+            "@youwol/http-clients": "^2.0.5",
+            "@youwol/http-primitives": "^0.1.2",
             "@youwol/flux-view": "^1.1.0",
             "@youwol/cdn-client": "^1.0.2",
             "@youwol/fv-tabs": "^0.2.1",

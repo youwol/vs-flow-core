@@ -2,6 +2,9 @@
 const runTimeDependencies = {
     "externals": {
         "rxjs": "^6.5.5",
+        "@youwol/logging": "^0.1.0",
+        "@youwol/http-clients": "^2.0.5",
+        "@youwol/http-primitives": "^0.1.2",
         "@youwol/flux-view": "^1.1.0",
         "@youwol/cdn-client": "^1.0.2",
         "@youwol/fv-tabs": "^0.2.1",
@@ -19,6 +22,9 @@ const runTimeDependencies = {
 }
 const externals = {
     "rxjs": "window['rxjs_APIv6']",
+    "@youwol/logging": "window['@youwol/logging_APIv01']",
+    "@youwol/http-clients": "window['@youwol/http-clients_APIv2']",
+    "@youwol/http-primitives": "window['@youwol/http-primitives_APIv01']",
     "@youwol/flux-view": "window['@youwol/flux-view_APIv1']",
     "@youwol/cdn-client": "window['@youwol/cdn-client_APIv1']",
     "@youwol/fv-tabs": "window['@youwol/fv-tabs_APIv02']",
@@ -34,6 +40,18 @@ const exportedSymbols = {
     "rxjs": {
         "apiKey": "6",
         "exportedSymbol": "rxjs"
+    },
+    "@youwol/logging": {
+        "apiKey": "01",
+        "exportedSymbol": "@youwol/logging"
+    },
+    "@youwol/http-clients": {
+        "apiKey": "2",
+        "exportedSymbol": "@youwol/http-clients"
+    },
+    "@youwol/http-primitives": {
+        "apiKey": "01",
+        "exportedSymbol": "@youwol/http-primitives"
     },
     "@youwol/flux-view": {
         "apiKey": "1",
@@ -77,6 +95,9 @@ const mainEntry : {entryFile: string,loadDependencies:string[]} = {
     "entryFile": "./index.ts",
     "loadDependencies": [
         "rxjs",
+        "@youwol/logging",
+        "@youwol/http-clients",
+        "@youwol/http-primitives",
         "@youwol/flux-view",
         "@youwol/cdn-client",
         "@youwol/fv-tabs",
@@ -92,18 +113,18 @@ const mainEntry : {entryFile: string,loadDependencies:string[]} = {
 const secondaryEntries : {[k:string]:{entryFile: string, name: string, loadDependencies:string[]}}= {}
 
 const entries = {
-     '@youwol/vs-flow-repl': './index.ts',
-    ...Object.values(secondaryEntries).reduce( (acc,e) => ({...acc, [`@youwol/vs-flow-repl/${e.name}`]:e.entryFile}), {})
+     '@youwol/vsf-notebook': './index.ts',
+    ...Object.values(secondaryEntries).reduce( (acc,e) => ({...acc, [`@youwol/vsf-notebook/${e.name}`]:e.entryFile}), {})
 }
 export const setup = {
-    name:'@youwol/vs-flow-repl',
-        assetId:'QHlvdXdvbC92cy1mbG93LXJlcGw=',
+    name:'@youwol/vsf-notebook',
+        assetId:'QHlvdXdvbC92c2Ytbm90ZWJvb2s=',
     version:'0.0.1-wip',
-    shortDescription:"vs-flow REPL",
-    developerDocumentation:'https://platform.youwol.com/applications/@youwol/cdn-explorer/latest?package=@youwol/vs-flow-repl',
-    npmPackage:'https://www.npmjs.com/package/@youwol/vs-flow-repl',
-    sourceGithub:'https://github.com/youwol/vs-flow-repl',
-    userGuide:'https://l.youwol.com/doc/@youwol/vs-flow-repl',
+    shortDescription:"",
+    developerDocumentation:'https://platform.youwol.com/applications/@youwol/cdn-explorer/latest?package=@youwol/vsf-notebook',
+    npmPackage:'https://www.npmjs.com/package/@youwol/vsf-notebook',
+    sourceGithub:'https://github.com/youwol/vsf-notebook',
+    userGuide:'https://l.youwol.com/doc/@youwol/vsf-notebook',
     apiVersion:'001',
     runTimeDependencies,
     externals,
@@ -129,7 +150,7 @@ export const setup = {
             modules,
             scripts,
         }).then(() => {
-            return window[`@youwol/vs-flow-repl_APIv001`]
+            return window[`@youwol/vsf-notebook_APIv001`]
         })
     },
     installAuxiliaryModule: ({name, cdnClient, installParameters}:{
@@ -144,7 +165,7 @@ export const setup = {
         const parameters = installParameters || {}
         const scripts = [
             ...(parameters.scripts || []),
-            `@youwol/vs-flow-repl#0.0.1-wip~dist/@youwol/vs-flow-repl/${entry.name}.js`
+            `@youwol/vsf-notebook#0.0.1-wip~dist/@youwol/vsf-notebook/${entry.name}.js`
         ]
         const modules = [
             ...(parameters.modules || []),
@@ -155,7 +176,7 @@ export const setup = {
             modules,
             scripts,
         }).then(() => {
-            return window[`@youwol/vs-flow-repl/${entry.name}_APIv001`]
+            return window[`@youwol/vsf-notebook/${entry.name}_APIv001`]
         })
     },
     getCdnDependencies(name?: string){
