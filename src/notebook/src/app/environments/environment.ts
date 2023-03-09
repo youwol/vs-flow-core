@@ -1,5 +1,5 @@
-import { Modules, IEnvironment, ToolBox } from '../../../lib'
-import { toolboxes } from '../../../toolboxes'
+import { Modules, IEnvironment, ToolBox } from '../../../../lib'
+import { toolboxes } from '../../../../toolboxes'
 import { BehaviorSubject } from 'rxjs'
 import { ObjectJs } from '@youwol/fv-tree'
 import * as FluxView from '@youwol/flux-view'

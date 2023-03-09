@@ -1,4 +1,4 @@
-import { Environment } from './environment'
+import { Environment } from './environments'
 import { DockableTabs } from '@youwol/fv-tabs'
 import {
     BehaviorSubject,
