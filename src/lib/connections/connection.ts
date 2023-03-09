@@ -9,7 +9,7 @@ import {
 } from '../modules/traits'
 import { map } from 'rxjs/operators'
 import { Configurations, InputMessage } from '../modules'
-import { BehaviorSubject, Subscription } from 'rxjs'
+import { BehaviorSubject, ReplaySubject, Subscription } from 'rxjs'
 
 type AnyJson = boolean | number | string | null | JsonArray | JsonMap
 export interface JsonMap {
@@ -64,6 +64,23 @@ export class Connection
         connected: true,
     })
 
+    private _start$: ReplaySubject<Message>
+    private _end$: ReplaySubject<Message>
+
+    get start$() {
+        if (!this._start$) {
+            this._start$ = new ReplaySubject<Message>(1)
+        }
+        return this._start$
+    }
+
+    get end$() {
+        if (!this._end$) {
+            this._end$ = new ReplaySubject<Message>(1)
+        }
+        return this._end$
+    }
+
     constructor({
         uid,
         start,
@@ -82,7 +99,7 @@ export class Connection
         })
         this.configuration = this.configurationModel.extractWith({
             values: configuration,
-            context: this.journal.addJournal({
+            context: this.journal.addPage({
                 title: 'constructor',
             }),
         })
@@ -106,9 +123,10 @@ export class Connection
         this.subscription = startSlot.observable$
             .pipe(
                 map((message: Message<unknown>) => {
-                    const ctx = this.journal.addJournal({
+                    const ctx = this.journal.addPage({
                         title: 'data transiting',
                     })
+                    this._start$ && this._start$.next(message)
                     ctx.info('Incoming message', message)
                     const adapted = adaptor ? adaptor(message) : message
                     ctx.info('Adapted message', adapted)
@@ -117,6 +135,7 @@ export class Connection
             )
             .subscribe(
                 (adaptedMessage: InputMessage<unknown>) => {
+                    this._end$ && this._end$.next(adaptedMessage)
                     endSlot.subject.next(adaptedMessage)
                 },
                 (_error) => {
