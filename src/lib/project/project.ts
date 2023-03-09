@@ -93,10 +93,18 @@ export class ProjectState {
         ).then(() => this)
     }
 
+    getModule(moduleId) {
+        return this.main.modules.find((m) => m.uid == moduleId)
+    }
+
     getObservable({ moduleId, slotId }: { moduleId: string; slotId: string }) {
         return this.main.modules
             .find((m) => m.uid == moduleId)
             .outputSlots.find((s) => s.slotId == slotId).observable$
+    }
+
+    getConnection(connectionId: string) {
+        return this.main.connections.find((c) => c.uid == connectionId)
     }
 
     async parseDag(
