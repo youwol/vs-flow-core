@@ -1,5 +1,5 @@
 import {
-    Object3D,
+    Group,
     Vector3,
     LineBasicMaterial,
     BufferGeometry,
@@ -15,7 +15,7 @@ import { SelectableTrait, Selector } from './traits'
 import { ReplaySubject } from 'rxjs'
 
 export class ConnectionObject3d
-    extends Object3D
+    extends Group
     implements SelectableTrait<Connection>
 {
     public readonly connection: Connection
@@ -33,8 +33,13 @@ export class ConnectionObject3d
     }) {
         super()
         Object.assign(this, params)
+        this.name = this.connection.uid
         const start = this.positions[this.connection.start.moduleId]
         const end = this.positions[this.connection.end.moduleId]
+        const l = start.distanceTo(end)
+        const dir = new Vector3().subVectors(end, start).normalize()
+        const center = start.clone().add(dir.clone().multiplyScalar(l / 2))
+        this.position.set(center.x, center.y, center.z)
 
         this.lineMaterial = new LineBasicMaterial({
             color: params.color || 0x0000ff,
@@ -47,8 +52,6 @@ export class ConnectionObject3d
         })
         const geometry = new BufferGeometry().setFromPoints([start, end])
         this.line = new Line(geometry, this.lineMaterial)
-        const dir = new Vector3().subVectors(end, start).normalize()
-        const l = start.distanceTo(end)
 
         const arrowHelper = new ArrowHelper(
             dir,

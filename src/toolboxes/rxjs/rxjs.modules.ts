@@ -160,11 +160,11 @@ export class RxjsTake extends Modules.DefaultImplementation<TSchemaTake> {
                 inputs: {
                     input$,
                 },
-                outputs: ({ inputs }) => {
+                outputs: ({ inputs, configuration }) => {
                     return {
                         output$: inputs.input$.pipe(
                             // count can not be change at run-time
-                            take(fwdParameters.configuration.count),
+                            take(configuration.count),
                         ),
                     }
                 },
