@@ -60,7 +60,8 @@ type CustomElement<TObject> = {
     wrapper: (obj: Object3D) => void
 }
 export class Dynamic3dContent {
-    static customElements: { [k: string]: CustomElement<VirtualDOM> } = {}
+    public readonly customElements: { [k: string]: CustomElement<VirtualDOM> } =
+        {}
     public readonly environment3d: Environment3D
     public readonly project: ProjectState
     public readonly layerId: string
@@ -77,6 +78,7 @@ export class Dynamic3dContent {
         uidSelected$: ReplaySubject<string>
         layerId: string
         environment3d: Environment3D
+        customElements: { [k: string]: CustomElement<VirtualDOM> }
     }) {
         Object.assign(this, params)
         const layerOrganizer = new LayerOrganizer({
@@ -134,26 +136,22 @@ export class Dynamic3dContent {
 
         allElements.forEach((mesh: Object3D) => {
             container.add(mesh)
-            const customElements = Object.values(
-                Dynamic3dContent.customElements,
-            )
-                .map((elem) => ({
-                    ...elem,
-                    parent: container.getObjectByName(elem.parentId),
-                }))
-                .filter((elem) => elem.parent != undefined)
-            customElements.forEach(({ parent, object, wrapper }) => {
-                const view = object(this.project)
-                const object3D =
-                    view instanceof Object3D
-                        ? view
-                        : new CSS3DObject(
-                              render(view) as unknown as HTMLDivElement,
-                          )
+        })
+        const customElements = Object.values(this.customElements)
+            .map((elem) => ({
+                ...elem,
+                parent: container.getObjectByName(elem.parentId),
+            }))
+            .filter((elem) => elem.parent != undefined)
+        customElements.forEach(({ parent, object, wrapper }) => {
+            const view = object
+            const object3D =
+                view instanceof Object3D
+                    ? view
+                    : new CSS3DObject(render(view) as unknown as HTMLDivElement)
 
-                wrapper(object3D)
-                parent.add(object3D)
-            })
+            wrapper(object3D)
+            parent.add(object3D)
         })
     }
 
@@ -374,11 +372,16 @@ export class Environment3D {
             this.htmlElementContainer
                 .querySelectorAll('.css-3d-object, .css-2d-object')
                 .forEach((e) => e.remove())
+            const wfViews =
+                project.wfViews as unknown as CustomElement<VirtualDOM>[]
+            const customElements: { [k: string]: CustomElement<VirtualDOM> } =
+                wfViews.reduce((acc, e) => ({ ...acc, [e.id]: e }), {})
             const dynamicContent3d = new Dynamic3dContent({
                 project: project,
                 uidSelected$: this.uidSelected$,
                 layerId: project.main.rootLayer.uid,
                 environment3d: this,
+                customElements,
             })
             dynamicContent3d.addToScene(this.scene)
 
@@ -401,9 +404,5 @@ export class Environment3D {
         this.ground && this.scene.remove(this.ground)
         this.ground = new GroundObject3d({ selectables: this.selectables })
         this.scene.add(this.ground)
-    }
-
-    display(elem: CustomElement<VirtualDOM>) {
-        Dynamic3dContent.customElements[elem.id] = elem
     }
 }

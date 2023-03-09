@@ -81,6 +81,7 @@ export class GroupObject3d extends Mesh implements SelectableTrait<Layer> {
             uidSelected$: this.uidSelected$,
             layerId: this.group.uid,
             environment3d: this.environment3d,
+            customElements: {},
         })
         const entitiesPosition = dynamicContent3d.entitiesPosition
         dynamicContent3d.addToScene(this.groupSubWf3d)
