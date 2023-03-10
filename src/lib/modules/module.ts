@@ -158,6 +158,7 @@ export class DefaultImplementation<
         })
         this.inputSlots = inputSlots
         this.outputSlots = outputSlots
+        constructorContext.end()
     }
 }
 
