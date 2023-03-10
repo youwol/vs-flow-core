@@ -1,4 +1,4 @@
-import { filter, map, mergeMap, take } from 'rxjs/operators'
+import { filter, map, mergeMap, take, tap } from 'rxjs/operators'
 import { combineLatest, forkJoin, merge, Observable, of, timer } from 'rxjs'
 import { Context } from '@youwol/logging'
 import {
@@ -30,8 +30,8 @@ export class RxjsOf extends Modules.DefaultImplementation<TSchemaOf> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'Of',
                         }),
@@ -68,8 +68,8 @@ export class RxjsFilter extends Modules.DefaultImplementation<TSchemaFilter> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'Filter',
                         }),
@@ -105,8 +105,8 @@ export class RxjsMap extends Modules.DefaultImplementation<TSchemaMap> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'Map',
                         }),
@@ -128,6 +128,9 @@ export class RxjsMap extends Modules.DefaultImplementation<TSchemaMap> {
                                         context: p.context,
                                     }) as OutputMessage,
                             ),
+                            tap(({ context }) => {
+                                context.end()
+                            }),
                         ),
                     }
                 },
@@ -147,8 +150,8 @@ export class RxjsTake extends Modules.DefaultImplementation<TSchemaTake> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'Take',
                         }),
@@ -180,8 +183,8 @@ export class RxjsMergeMap extends Modules.DefaultImplementation<TSchemaMergeMap>
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'MergeMap',
                         }),
@@ -223,8 +226,8 @@ export class RxjsTimer extends Modules.DefaultImplementation<TSchemaTimer> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'Timer',
                         }),
@@ -284,8 +287,8 @@ export class RxjsCombineLatest extends Modules.DefaultImplementation<TSchemaStre
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'CombineLatest',
                         }),
@@ -294,7 +297,7 @@ export class RxjsCombineLatest extends Modules.DefaultImplementation<TSchemaStre
                         }),
                     },
                 }),
-                inputs: createInputs(fwdParameters.configuration),
+                inputs: createInputs(fwdParameters.configurationInstance),
                 outputs: ({ inputs, context }) => {
                     return {
                         output$: combineLatest(Object.values(inputs)).pipe(
@@ -319,8 +322,8 @@ export class RxjsMerge extends Modules.DefaultImplementation<TSchemaStreamCombin
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'Merge',
                         }),
@@ -329,7 +332,7 @@ export class RxjsMerge extends Modules.DefaultImplementation<TSchemaStreamCombin
                         }),
                     },
                 }),
-                inputs: createInputs(fwdParameters.configuration),
+                inputs: createInputs(fwdParameters.configurationInstance),
                 outputs: ({ inputs }) => {
                     return {
                         output$: merge(...Object.values(inputs)),
@@ -346,8 +349,8 @@ export class RxjsForkJoin extends Modules.DefaultImplementation<TSchemaStreamCom
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'ForkJoin',
                         }),
@@ -356,7 +359,7 @@ export class RxjsForkJoin extends Modules.DefaultImplementation<TSchemaStreamCom
                         }),
                     },
                 }),
-                inputs: createInputs(fwdParameters.configuration),
+                inputs: createInputs(fwdParameters.configurationInstance),
                 outputs: ({ inputs, context }) => {
                     return {
                         output$: forkJoin(...Object.values(inputs)).pipe(
