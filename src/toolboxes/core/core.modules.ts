@@ -1,28 +1,25 @@
-import { Configurations, InputMessage, IOs } from '../../lib/modules'
+import { Configurations, IOs, ProcessingMessage } from '../../lib/modules'
 import { Modules } from '../../lib'
 import { noContract } from '../../lib/modules/IOs/contract'
 import { child$, VirtualDOM } from '@youwol/flux-view'
 import { Context } from '@youwol/logging'
 
-const input$ = new IOs.Input({
+const freeInput$ = new IOs.Input({
     description: 'the input stream',
     contract: noContract,
 })
 
-type TSchemaOf = {
+type TSchema = {
     name: Configurations.Attributes.String
-    vDom: Configurations.Attributes.JsCode<(d: InputMessage) => VirtualDOM>
+    vDom: Configurations.Attributes.JsCode<(d: ProcessingMessage) => VirtualDOM>
 }
-type TExtractedConfig = {
-    name: string
-    vDom: (d: InputMessage) => VirtualDOM
-}
-export class CoreBuilderView extends Modules.DefaultImplementation<TSchemaOf> {
+
+export class BuilderView extends Modules.DefaultImplementation<TSchema> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configurations.Configuration({
-                    model: {
+                configuration: new Configurations.Configuration({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'BuilderView',
                         }),
@@ -37,21 +34,25 @@ export class CoreBuilderView extends Modules.DefaultImplementation<TSchemaOf> {
                     },
                 }),
                 inputs: {
-                    input$,
+                    input$: freeInput$,
                 },
                 outputs: ({ inputs }) => ({ output$: inputs.input$ }),
                 builderView: (mdle) => {
                     return {
                         children: [
-                            child$(mdle.inputSlots[0].subject, (message) => {
-                                const context = new Context('', {})
-                                const conf =
-                                    mdle.configurationModel.extractWith({
-                                        values: mdle.configuration,
-                                        context,
-                                    }) as unknown as TExtractedConfig
-                                return conf.vDom(message)
-                            }),
+                            child$(
+                                mdle.inputSlots[0].preparedMessage$,
+                                (message) => {
+                                    const context = new Context('', {})
+                                    const conf = mdle.configuration.extractWith(
+                                        {
+                                            values: mdle.configurationInstance,
+                                            context,
+                                        },
+                                    )
+                                    return conf.vDom(message)
+                                },
+                            ),
                         ],
                     }
                 },
