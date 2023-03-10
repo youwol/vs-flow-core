@@ -151,6 +151,12 @@ export class Connection
         return this.subscription != undefined
     }
 
+    disconnect() {
+        if (this.isConnected()) {
+            this.subscription.unsubscribe()
+        }
+    }
+
     adapt(d: unknown) {
         return this.configurationInstance.adaptor(d)
     }
