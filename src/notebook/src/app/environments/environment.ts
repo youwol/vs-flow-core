@@ -1,11 +1,16 @@
 import { Modules, IEnvironment, ToolBox } from '../../../../lib'
 import { toolboxes } from '../../../../toolboxes'
-import { BehaviorSubject } from 'rxjs'
+import { BehaviorSubject, ReplaySubject } from 'rxjs'
 import { ObjectJs } from '@youwol/fv-tree'
 import * as FluxView from '@youwol/flux-view'
 import { VirtualDOM } from '@youwol/flux-view'
 import { ExecutionJournal } from '../../../../lib/modules/traits'
-import { installJournalModule } from '@youwol/logging'
+import {
+    installJournalModule,
+    Log,
+    ErrorLog,
+    LogChannel,
+} from '@youwol/logging'
 import * as cdnClient from '@youwol/cdn-client'
 
 export class Environment implements IEnvironment {
@@ -43,9 +48,21 @@ export class Environment implements IEnvironment {
             },
         },
     ]
+    public readonly errorChannel$ = new ReplaySubject<Log>()
+    public readonly logsChannels: LogChannel[]
 
     constructor(params: { toolboxes: ToolBox[] }) {
         Object.assign(this, params)
+        this.logsChannels = [
+            new LogChannel({
+                filter: (log) => log instanceof ErrorLog,
+                pipes: [this.errorChannel$],
+            }),
+        ]
+        this.errorChannel$.subscribe((log: ErrorLog<Error, unknown>) => {
+            console.error(log.error)
+            console.error(log.data)
+        })
     }
 
     async import(toolbox: string): Promise<ToolBox> {
@@ -73,7 +90,12 @@ export class Environment implements IEnvironment {
                     return module.declaration.typeId == typeId
                 })
         return (await module.getInstance({
-            fwdParams: { uid: moduleId, configuration, environment: this },
+            fwdParams: {
+                uid: moduleId,
+                configurationInstance: configuration,
+                environment: this,
+                logsChannels: this.logsChannels,
+            },
             environment: this,
         })) as T & Modules.Implementation
     }
