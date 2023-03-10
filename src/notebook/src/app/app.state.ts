@@ -240,6 +240,9 @@ export class AppState {
             ]),
             selected$: new BehaviorSubject<string>('Project'),
         })
+        if (params.originalReplSource.cells.length == 0) {
+            this.newCell(undefined, 'before')
+        }
     }
 
     execute(cell: NotebookCellTrait): Promise<{
