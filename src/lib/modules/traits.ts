@@ -59,10 +59,20 @@ export function moduleConnectors<
                     return { ...message, context: ctx }
                 }),
                 filter((message) => {
+                    if (!e.contract) {
+                        message.context.info('No contract defined')
+                        return true
+                    }
                     const resolution = e.contract.resolve(
                         message.data,
                         message.context,
                     )
+                    if (!resolution.succeeded) {
+                        message.context.error(
+                            Error('Contract resolution failed'),
+                            { contract: e.contract, resolution },
+                        )
+                    }
                     return resolution.succeeded
                 }),
                 map((message) => {
