@@ -13,12 +13,15 @@ const input$ = new IOs.Input({
     contract: noContract,
 })
 
-export class PlotModule extends Modules.DefaultImplementation {
+export class PlotModule extends Modules.DefaultImplementation<
+    TSchema,
+    { input$: unknown }
+> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configuration<TSchema>({
-                    model: {
+                configuration: new Configuration<TSchema>({
+                    schema: {
                         name: new Configurations.Attributes.String({
                             value: 'Plot',
                         }),
@@ -34,13 +37,13 @@ export class PlotModule extends Modules.DefaultImplementation {
                     input$,
                 },
                 builderView: () => undefined,
-                renderView: () => {
-                    return new ModuleViewRenderer({
-                        htmlElement: document.createElement('div'),
-                    })
-                },
             },
             fwdParameters,
         )
+    }
+    html() {
+        return new ModuleViewRenderer({
+            htmlElement: document.createElement('div'),
+        })
     }
 }

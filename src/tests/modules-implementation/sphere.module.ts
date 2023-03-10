@@ -1,6 +1,6 @@
 import { Configuration, Attributes } from '../../lib/modules/configurations'
 import { Modules } from '../..'
-import { IOs, ProcessingMessage } from '../../lib/modules'
+import { IOs } from '../../lib/modules'
 import { Material, SphereGeometry, Mesh } from 'three'
 import { map } from 'rxjs/operators'
 
@@ -18,26 +18,16 @@ type TSchema = {
     radius: Attributes.Float
     transform: Transform
 }
-type TData = { material: Material }
-
-type TExtractedConfig = {
-    radius: number
-    transform: {
-        translation: {
-            x: number
-            y: number
-            z: number
-        }
-    }
+type Inputs = {
+    input$: { material: Material }
 }
-type TMessage = ProcessingMessage<TData, TExtractedConfig>
 
-export class Sphere extends Modules.DefaultImplementation<TSchema> {
+export class Sphere extends Modules.DefaultImplementation<TSchema, Inputs> {
     constructor(fwdParameters) {
         super(
             {
-                configurationModel: new Configuration<TSchema>({
-                    model: {
+                configuration: new Configuration<TSchema>({
+                    schema: {
                         name: new Attributes.String({ value: 'Sphere' }),
                         radius: new Attributes.Float({ value: 0, min: 0 }),
                         transform: {
@@ -66,7 +56,7 @@ export class Sphere extends Modules.DefaultImplementation<TSchema> {
                 outputs: ({ inputs }) => {
                     return {
                         output$: inputs.input$.pipe(
-                            map((m: TMessage) => {
+                            map((m) => {
                                 const geometry = new SphereGeometry(
                                     m.configuration.radius,
                                     10,

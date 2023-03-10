@@ -29,11 +29,11 @@ test('sphere module', async () => {
 test('plot module', async () => {
     const env = new TestEnvironment({ toolboxes: [toolbox] })
 
-    const module = await env.instantiateModule<Modules.Traits.RenderingTrait>({
+    const module = await env.instantiateModule<Modules.Traits.HtmlTrait>({
         typeId: 'plot',
     })
     expect(module).toBeTruthy()
-    expect(module.renderView).toBeDefined()
-    const view = module.renderView()
+    expect(module.html).toBeDefined()
+    const view = module.html()
     expect(view).toBeTruthy()
 })

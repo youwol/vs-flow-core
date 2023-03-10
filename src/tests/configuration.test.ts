@@ -17,7 +17,7 @@ test('configuration', async () => {
     }
     const context = new Context('conf-test', {})
     const conf = new Configuration<TSchema>({
-        model: {
+        schema: {
             name: new Attributes.String({ value: 'test-conf' }),
             radius: new Attributes.Float({ value: 0, min: 0 }),
             transform: {

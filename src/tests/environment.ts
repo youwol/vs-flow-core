@@ -42,7 +42,11 @@ export class TestEnvironment implements IEnvironment {
             console.error(`Can not find module of type ${typeId}`)
         }
         return (await module.getInstance({
-            fwdParams: { uid: moduleId, configuration, environment: this },
+            fwdParams: {
+                uid: moduleId,
+                configurationInstance: configuration,
+                environment: this,
+            },
             environment: this,
         })) as T & Modules.Implementation
     }

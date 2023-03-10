@@ -6,9 +6,9 @@ import { emptyProject } from './test.utils'
 // eslint-disable-next-line jest/no-done-callback -- more readable that way
 test('execution', (done) => {
     from(
-        emptyProject().parseDag(['of', 'filter', 'a0=0>sphere(s0)'], {
-            adaptors: {
-                a0: ({ context }) => {
+        emptyProject().parseDag(['(of#of)>>(filter#filter)>#a0>(sphere#s0)'], {
+            a0: {
+                adaptor: ({ context }) => {
                     return { data: new MeshStandardMaterial(), context }
                 },
             },

@@ -5,7 +5,7 @@ import { attr$ } from '@youwol/flux-view'
 
 test('one module', async () => {
     let project = emptyProject()
-    project = await project.parseDag(['filter'])
+    project = await project.parseDag(['(filter)'])
     const [modules, connections] = [
         project.main.modules,
         project.main.connections,
@@ -60,7 +60,7 @@ test('repl modules with IO & adaptor', async () => {
     expect(modules[1]).toBeInstanceOf(Sphere)
 
     expect(connections).toHaveLength(1)
-    expect(connections[0].configuration.adaptor).toBeTruthy()
+    expect(connections[0].configurationInstance.adaptor).toBeTruthy()
     const r = connections[0].adapt({ data: 5 })
     expect(r).toEqual({ data: 5, configuration: {} })
 })
@@ -94,7 +94,7 @@ test('repl modules with config', async () => {
     })
     const modules = project.main.modules
     expect(modules).toHaveLength(1)
-    expect(modules[0].configuration).toEqual({
+    expect(modules[0].configurationInstance).toEqual({
         name: 'Sphere',
         radius: 0,
         transform: { translation: { x: 4, y: 0, z: 0 } },
@@ -125,18 +125,15 @@ test('repl with view', async () => {
             function: ({ data }) => data % 2 == 0,
         },
     })
-    project = project.addView({
-        viewId: 'Test',
-        implementation: (project) => {
-            const obs = project.getObservable({
-                moduleId: 'm0',
-                slotId: 'output$',
-            })
+    project = project.addView('Test', (project) => {
+        const obs = project.getObservable({
+            moduleId: 'm0',
+            slotId: 'output$',
+        })
 
-            return {
-                innerText: attr$(obs, () => new Date().toTimeString()),
-            }
-        },
+        return {
+            innerText: attr$(obs, () => new Date().toTimeString()),
+        }
     })
     expect(project.views.Test).toBeTruthy()
 })
@@ -179,7 +176,7 @@ test('repl misc 1', async () => {
     })
     const connections = project.main.connections
     expect(connections).toHaveLength(1)
-    expect(connections[0].configuration.adaptor).toBeTruthy()
+    expect(connections[0].configurationInstance.adaptor).toBeTruthy()
     const r = connections[0].adapt({ data: 5 })
     expect(r).toEqual({ data: 5, configuration: {} })
 })
