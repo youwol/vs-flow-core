@@ -313,7 +313,7 @@ export class AppState {
         const newCell = new CellCodeState({
             appState: this,
             content:
-                'return async ({repl, cell, env, env3d}) => {\n\tconsole.log("REPL", repl)\n}',
+                'return async ({project, cell, env}) => {\n\treturn project\n}',
         })
         const indexInsert =
             where == 'after'
