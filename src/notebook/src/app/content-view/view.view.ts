@@ -16,6 +16,7 @@ export class ViewTab implements VirtualDOM {
         project: ProjectState
     }) {
         Object.assign(this, params)
-        this.children = [this.project.views[this.node.id](this.project)]
+        const view = this.project.views[this.node.id]
+        this.children = [typeof view == 'function' ? view(this.project) : view]
     }
 }
