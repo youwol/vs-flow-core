@@ -345,7 +345,7 @@ export class AppState {
         const indexCell = this.cells$.value.indexOf(cell)
         const nextCell = this.cells$.value[indexCell + 1]
         const state = this.projectByCells$.value.get(nextCell)
-        state != this.project$.value && this.project$.next(state)
+        state && state != this.project$.value && this.project$.next(state)
     }
 
     changeCellMode(cell: NotebookCellTrait, mode: 'code' | 'markdown') {
