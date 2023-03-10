@@ -43,7 +43,7 @@ export class ModuleObject3d
         this.sphere.castShadow = true
         const labelDiv = document.createElement('div')
         labelDiv.className = 'label'
-        labelDiv.textContent = this.module.configuration.name as string
+        labelDiv.textContent = this.module.configurationInstance.name as string
         labelDiv.style.marginTop = '-1em'
         labelDiv.style.fontSize = '4px'
         const label = new CSS3DObject(labelDiv)

@@ -61,7 +61,7 @@ export class ConnectionObject3d
             2,
             1,
         )
-        this.children = this.connection.configuration.adaptor
+        this.children = this.connection.configurationInstance.adaptor
             ? [this.line, arrowHelper, new AdaptorObject3D(params)]
             : [this.line, arrowHelper]
 
