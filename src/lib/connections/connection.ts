@@ -135,13 +135,13 @@ export class Connection
             .subscribe(
                 (adaptedMessage: InputMessage<unknown>) => {
                     this._end$ && this._end$.next(adaptedMessage)
-                    endSlot.subject.next(adaptedMessage)
+                    endSlot.rawMessage$.next(adaptedMessage)
                 },
                 (_error) => {
                     /*no op for now*/
                 },
                 () => {
-                    endSlot.subject.complete()
+                    endSlot.rawMessage$.complete()
                     this.status$.next({ connected: false })
                 },
             )

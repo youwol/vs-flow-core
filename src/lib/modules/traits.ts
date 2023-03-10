@@ -10,6 +10,7 @@ import { filter, map, tap } from 'rxjs/operators'
 import * as Configurations from './configurations'
 import { ConfigInstance, Schema } from './configurations'
 import { Context, Journal, LogChannel } from '@youwol/logging'
+import { noContract } from './IOs/contract'
 
 export interface UidTrait {
     uid: string
@@ -17,6 +18,49 @@ export interface UidTrait {
 export interface ApiTrait {
     inputSlots: Array<IOs.InputSlot>
     outputSlots: Array<IOs.OutputSlot>
+}
+
+function prepareMessage(
+    moduleId,
+    slotId,
+    defaultConfiguration,
+    staticConfiguration,
+    contract,
+    rawMessage: InputMessage,
+    executionJournal,
+): ProcessingMessage {
+    const ctx = executionJournal.addPage({
+        title: `Enter slot ${slotId}`,
+        userData: rawMessage.context,
+    })
+    ctx.info('Received message', rawMessage)
+    const step1 = { ...rawMessage, context: ctx }
+
+    if (!contract) {
+        contract = noContract
+    }
+    const resolution = contract.resolve(step1.data, step1.context)
+    step1.context.info('Contract resolution done', resolution)
+    if (!resolution.succeeded) {
+        step1.context.error(
+            Error(`Contract resolution failed for ${moduleId}`),
+            { contract: contract, resolution, message: step1 },
+        )
+        return undefined
+    }
+    const inputMessage = {
+        data: resolution.value,
+        configuration: defaultConfiguration.extractWith({
+            values: {
+                ...staticConfiguration,
+                ...step1.configuration,
+            },
+            context: step1.context,
+        }),
+        context: step1.context,
+    }
+    step1.context.info("Module's input message prepared", inputMessage)
+    return inputMessage
 }
 
 export function moduleConnectors<
@@ -38,58 +82,33 @@ export function moduleConnectors<
 } {
     const inputSlots = Object.entries(params.inputs || {}).map(
         ([slotId, input]: [string, IOs.Input<unknown>]) => {
+            const rawMessage$ = new ReplaySubject<InputMessage>(1)
+            const preparedMessage$ = rawMessage$.pipe(
+                map((rawMessage) => {
+                    return prepareMessage(
+                        params.moduleId,
+                        slotId,
+                        params.defaultConfiguration,
+                        params.staticConfiguration,
+                        input.contract,
+                        rawMessage,
+                        params.executionJournal,
+                    )
+                }),
+                filter((message) => message != undefined),
+            )
             return new IOs.InputSlot({
                 slotId: slotId,
                 moduleId: params.moduleId,
                 description: input.description,
                 contract: input.contract,
-                subject: new ReplaySubject<InputMessage>(1),
+                rawMessage$,
+                preparedMessage$,
             })
         },
     )
     const observers = inputSlots.reduce(
-        (acc, e) => ({
-            ...acc,
-            [e.slotId]: e.subject.pipe(
-                map((message: InputMessage<unknown>) => {
-                    const ctx = params.executionJournal.addPage({
-                        title: `Enter slot ${e.slotId}`,
-                        userData: message.context,
-                    })
-                    return { ...message, context: ctx }
-                }),
-                filter((message) => {
-                    if (!e.contract) {
-                        message.context.info('No contract defined')
-                        return true
-                    }
-                    const resolution = e.contract.resolve(
-                        message.data,
-                        message.context,
-                    )
-                    if (!resolution.succeeded) {
-                        message.context.error(
-                            Error('Contract resolution failed'),
-                            { contract: e.contract, resolution },
-                        )
-                    }
-                    return resolution.succeeded
-                }),
-                map((message) => {
-                    return {
-                        data: message.data,
-                        configuration: params.defaultConfiguration.extractWith({
-                            values: {
-                                ...params.staticConfiguration,
-                                ...message.configuration,
-                            },
-                            context: message.context,
-                        }),
-                        context: message.context,
-                    }
-                }),
-            ),
-        }),
+        (acc, e) => ({ ...acc, [e.slotId]: e.preparedMessage$ }),
         {},
     ) as {
         [Property in keyof TInputs]: Observable<
