@@ -11,7 +11,7 @@ import {
     ExecutionJournal,
     moduleConnectors,
     UidTrait,
-    RenderingTrait,
+    HtmlTrait,
     JournalTrait,
 } from './traits'
 import { Context, LogChannel } from '@youwol/logging'
@@ -106,7 +106,7 @@ export type ForwardArgs = {
 }
 
 type TDefaultImplementation<TSchema extends Schema> = Implementation<TSchema> &
-    RenderingTrait
+    HtmlTrait
 
 export class DefaultImplementation<
     TSchema extends Schema,

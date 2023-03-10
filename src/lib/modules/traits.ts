@@ -189,8 +189,8 @@ export interface SideEffectsTrait {
     dispose()
 }
 
-export interface RenderingTrait {
-    renderView?: () => ModuleViewRenderer
+export interface HtmlTrait {
+    html?: () => ModuleViewRenderer
 }
 
 export interface PluginTrait {
