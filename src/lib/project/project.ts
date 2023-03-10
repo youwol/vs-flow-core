@@ -181,18 +181,15 @@ export class ProjectState {
         }, this)
     }
 
-    addView({
-        viewId,
-        implementation,
-    }: {
-        viewId: string
-        implementation: (project: ProjectState) => VirtualDOM
-    }): ProjectState {
+    addView(
+        viewId: string,
+        vDOM: VirtualDOM | ((project: ProjectState) => VirtualDOM),
+    ): ProjectState {
         return new ProjectState({
             ...this,
             views: {
                 ...this.views,
-                [viewId]: implementation,
+                [viewId]: vDOM,
             },
         })
     }
