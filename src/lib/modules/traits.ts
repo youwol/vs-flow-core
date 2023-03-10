@@ -127,8 +127,8 @@ export function moduleConnectors<
     }
 }
 export interface ConfigurableTrait<TSchema extends Schema> {
-    configurationModel: Configurations.Configuration<TSchema>
-    configuration: { [k: string]: unknown }
+    configuration: Configurations.Configuration<TSchema>
+    configurationInstance: { [k: string]: unknown }
 }
 
 export class ExecutionJournal implements Journal.Journal {

@@ -43,19 +43,18 @@ export class Connection
 
     public readonly uid: string
 
-    public readonly configurationModel =
-        new Configurations.Configuration<TSchema>({
-            model: {
-                name: new Configurations.Attributes.String({
-                    value: 'Connection',
-                }),
-                adaptor: new Configurations.Attributes.JsCode({
-                    value: undefined,
-                }),
-            },
-        })
+    public readonly configuration = new Configurations.Configuration<TSchema>({
+        schema: {
+            name: new Configurations.Attributes.String({
+                value: 'Connection',
+            }),
+            adaptor: new Configurations.Attributes.JsCode({
+                value: undefined,
+            }),
+        },
+    })
 
-    public readonly configuration: { adaptor?: Adaptor }
+    public readonly configurationInstance: { adaptor?: Adaptor }
     public readonly journal: ExecutionJournal
 
     private subscription: Subscription
@@ -97,7 +96,7 @@ export class Connection
         this.journal = new ExecutionJournal({
             logsChannels: [],
         })
-        this.configuration = this.configurationModel.extractWith({
+        this.configurationInstance = this.configuration.extractWith({
             values: configuration,
             context: this.journal.addPage({
                 title: 'constructor',
@@ -118,7 +117,7 @@ export class Connection
         const endSlot = endModule.inputSlots.find(
             (slot) => slot.slotId == this.end.slotId,
         )
-        const adaptor = this.configuration.adaptor
+        const adaptor = this.configurationInstance.adaptor
 
         this.subscription = startSlot.observable$
             .pipe(
@@ -153,6 +152,6 @@ export class Connection
     }
 
     adapt(d: unknown) {
-        return this.configuration.adaptor(d)
+        return this.configurationInstance.adaptor(d)
     }
 }

@@ -19,9 +19,9 @@ export type ConfigInstance<TTarget> = {
 }
 
 export class Configuration<T> {
-    model: T
+    schema: T
 
-    constructor(params: { model: T }) {
+    constructor(params: { schema: T }) {
         Object.assign(this, params)
     }
 
@@ -34,7 +34,7 @@ export class Configuration<T> {
     }): ConfigInstance<T> {
         return context.withChild('Attempt extractWith', (childContext) => {
             const rawExtracted = parseObject(
-                this.model as unknown as Schema,
+                this.schema as unknown as Schema,
                 values || {},
             )
             childContext.info('extracted', rawExtracted)

@@ -89,7 +89,7 @@ export type TOutputGenerator<TInputs, TConfig = unknown> = ({
 }) => { [k: string]: Observable<OutputMessage> }
 
 export type UserArgs<TSchema extends Schema, TInputs> = {
-    configurationModel: Configurations.Configuration<TSchema>
+    configuration: Configurations.Configuration<TSchema>
     inputs?: {
         [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
     }
@@ -100,7 +100,7 @@ export type UserArgs<TSchema extends Schema, TInputs> = {
 
 export type ForwardArgs = {
     uid?: string
-    configuration?: { [_k: string]: unknown }
+    configurationInstance?: { [_k: string]: unknown }
     logsChannels?: LogChannel[]
     environment: IEnvironment
 }
@@ -115,8 +115,8 @@ export class DefaultImplementation<
 {
     public readonly uid: string = uuidv4()
     public readonly environment: IEnvironment
-    public readonly configurationModel: Configurations.Configuration<TSchema>
-    public readonly configuration: ConfigInstance<TSchema>
+    public readonly configuration: Configurations.Configuration<TSchema>
+    public readonly configurationInstance: ConfigInstance<TSchema>
     public readonly inputs: {
         [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
     }
@@ -142,8 +142,8 @@ export class DefaultImplementation<
             title: 'constructor',
         })
 
-        this.configuration = this.configurationModel.extractWith({
-            values: fwdParameters.configuration,
+        this.configurationInstance = this.configuration.extractWith({
+            values: fwdParameters.configurationInstance,
             context: constructorContext,
         })
 
@@ -152,8 +152,8 @@ export class DefaultImplementation<
             inputs: this.inputs,
             outputs: this.outputs,
             executionJournal: this.journal,
-            defaultConfiguration: this.configurationModel,
-            staticConfiguration: fwdParameters.configuration,
+            defaultConfiguration: this.configuration,
+            staticConfiguration: fwdParameters.configurationInstance,
             context: constructorContext,
         })
         this.inputSlots = inputSlots
