@@ -136,7 +136,7 @@ export class ExecutionJournal implements Journal.Journal {
     public readonly abstract = ''
 
     public pages: Journal.Page[] = []
-    public readonly logChannels: LogChannel[] = []
+    public readonly logsChannels: LogChannel[] = []
 
     constructor(params: { logsChannels?: LogChannel[] }) {
         Object.assign(this, params)
@@ -151,7 +151,7 @@ export class ExecutionJournal implements Journal.Journal {
         userData?: { [_key: string]: unknown }
         abstract?: string
     }) {
-        const context = new Context(title, userData, this.logChannels)
+        const context = new Context(title, userData, this.logsChannels)
 
         this.pages = this.pages
             .filter((j) => j.title != title)
