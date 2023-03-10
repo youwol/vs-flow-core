@@ -98,6 +98,25 @@ export type UserArgs<TSchema extends Schema, TInputs> = {
     renderView?: (instance: Implementation<TSchema>) => ModuleViewRenderer
 }
 
+type extractGeneric<Type> = Type extends IOs.Input<infer X> ? X : never
+
+export type OutputMapper<TInputs, TConfigModel> = ({
+    inputs,
+    context,
+    configuration,
+}: {
+    inputs: {
+        [Property in keyof TInputs]: Observable<
+            ProcessingMessage<
+                extractGeneric<TInputs[Property]>,
+                ConfigInstance<ConfigInstance<TConfigModel>>
+            >
+        >
+    }
+    context: Context
+    configuration: ConfigInstance<TConfigModel>
+}) => { [k: string]: Observable<OutputMessage> }
+
 export type ForwardArgs = {
     uid?: string
     configurationInstance?: { [_k: string]: unknown }
