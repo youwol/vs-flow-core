@@ -1,5 +1,5 @@
 import { Modules, ToolBox } from '../../lib'
-import { CoreBuilderView } from './core.modules'
+import { BuilderView, Console } from './core.modules'
 
 export function toolbox() {
     return new ToolBox({
@@ -11,7 +11,15 @@ export function toolbox() {
                     typeId: 'builderView',
                 },
                 implementation: ({ fwdParams }) => {
-                    return new CoreBuilderView(fwdParams)
+                    return new BuilderView(fwdParams)
+                },
+            }),
+            new Modules.Module({
+                declaration: {
+                    typeId: 'console',
+                },
+                implementation: ({ fwdParams }) => {
+                    return new Console(fwdParams)
                 },
             }),
         ],

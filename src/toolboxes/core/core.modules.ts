@@ -61,3 +61,36 @@ export class BuilderView extends Modules.DefaultImplementation<TSchema> {
         )
     }
 }
+
+const consoleConfig = {
+    name: new Configurations.Attributes.String({
+        value: 'Console',
+    }),
+    prefix: new Configurations.Attributes.String({
+        value: 'Console',
+    }),
+}
+export class Console extends Modules.DefaultImplementation<
+    typeof consoleConfig,
+    {
+        input$: unknown
+    }
+> {
+    constructor(fwdParameters) {
+        super(
+            {
+                configuration: new Configurations.Configuration({
+                    schema: consoleConfig,
+                }),
+                inputs: {
+                    input$: freeInput$,
+                },
+                outputs: () => ({}),
+            },
+            fwdParameters,
+        )
+        this.inputSlots[0].preparedMessage$.subscribe((d) => {
+            console.log(this.configurationInstance.prefix, d)
+        })
+    }
+}
