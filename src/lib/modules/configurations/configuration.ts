@@ -1,6 +1,5 @@
 import { AttributeTrait } from './attributes'
 import * as Attributes from './attributes'
-import { JsonMap } from '../../connections'
 import { Context } from '@youwol/logging'
 export * as Attributes from './attributes'
 
@@ -11,6 +10,12 @@ export interface Schema {
 
 export interface SchemaInner {
     [k: string]: SchemaInner | SchemaInner[] | AttributeTrait<unknown>
+}
+
+export type ConfigInstance<TTarget> = {
+    [Property in keyof TTarget]: TTarget[Property] extends AttributeTrait<unknown>
+        ? TTarget[Property]['__value']
+        : ConfigInstance<TTarget[Property]>
 }
 
 export class Configuration<T> {
@@ -26,7 +31,7 @@ export class Configuration<T> {
     }: {
         values?: { [_k: string]: unknown }
         context: Context
-    }): JsonMap {
+    }): ConfigInstance<T> {
         return context.withChild('Attempt extractWith', (childContext) => {
             const rawExtracted = parseObject(
                 this.model as unknown as Schema,

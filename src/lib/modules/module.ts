@@ -2,7 +2,7 @@ import * as Configurations from './configurations'
 import * as IOs from './IOs'
 import { InstallInputs } from '@youwol/cdn-client'
 import { Observable } from 'rxjs'
-import { Schema } from './configurations'
+import { ConfigInstance, Schema } from './configurations'
 import { Connections, Modules } from '..'
 import { JsonMap } from '../connections'
 import {
@@ -74,24 +74,27 @@ export type ProcessingMessage<TData = unknown, TConfig = unknown> = {
     configuration: TConfig
 }
 
-export type TOutputGenerator = ({
+export type TOutputGenerator<TInputs, TConfig = unknown> = ({
     inputs,
     context,
     configuration,
 }: {
     inputs: {
-        [k: string]: Observable<ProcessingMessage>
+        [Property in keyof TInputs]: Observable<
+            ProcessingMessage<TInputs[Property], TConfig>
+        >
     }
     context: Context
-    // The following 'any' is because I did not find out yet how to generate proper type from 'TSchema'
-    configuration: any
+    configuration: TConfig
 }) => { [k: string]: Observable<OutputMessage> }
 
-export type UserArgs<TSchema extends Schema> = {
+export type UserArgs<TSchema extends Schema, TInputs> = {
     configurationModel: Configurations.Configuration<TSchema>
-    inputs?: { [k: string]: IOs.Input }
-    outputs?: TOutputGenerator
-    builderView: (instance: Implementation<TSchema>) => ModuleViewBuilder
+    inputs?: {
+        [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
+    }
+    outputs?: TOutputGenerator<TInputs, ConfigInstance<TSchema>>
+    builderView?: (instance: Implementation<TSchema>) => ModuleViewBuilder
     renderView?: (instance: Implementation<TSchema>) => ModuleViewRenderer
 }
 
@@ -105,15 +108,19 @@ export type ForwardArgs = {
 type TDefaultImplementation<TSchema extends Schema> = Implementation<TSchema> &
     RenderingTrait
 
-export class DefaultImplementation<TSchema extends Schema = Schema>
-    implements TDefaultImplementation<TSchema>
+export class DefaultImplementation<
+    TSchema extends Schema,
+    TInputs = { [k: string]: unknown },
+> implements TDefaultImplementation<TSchema>
 {
     public readonly uid: string = uuidv4()
     public readonly environment: IEnvironment
     public readonly configurationModel: Configurations.Configuration<TSchema>
-    public readonly configuration: JsonMap
-    public readonly inputs: { [k: string]: IOs.Input }
-    public readonly outputs?: TOutputGenerator = () => ({})
+    public readonly configuration: ConfigInstance<TSchema>
+    public readonly inputs: {
+        [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
+    }
+    public readonly outputs?: TOutputGenerator<TInputs> = () => ({})
     public readonly builderView: () => ModuleViewBuilder
     public readonly renderView?: () => ModuleViewRenderer
 
@@ -121,7 +128,10 @@ export class DefaultImplementation<TSchema extends Schema = Schema>
     public readonly outputSlots = new Array<IOs.OutputSlot>()
     public readonly journal: ExecutionJournal
 
-    constructor(params: UserArgs<TSchema>, fwdParameters: ForwardArgs) {
+    constructor(
+        params: UserArgs<TSchema, TInputs>,
+        fwdParameters: ForwardArgs,
+    ) {
         Object.assign(this, params, fwdParameters)
 
         this.uid = this.uid || uuidv4()

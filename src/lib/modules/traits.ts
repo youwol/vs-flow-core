@@ -8,7 +8,7 @@ import {
 import { Observable, ReplaySubject } from 'rxjs'
 import { filter, map, tap } from 'rxjs/operators'
 import * as Configurations from './configurations'
-import { Schema } from './configurations'
+import { ConfigInstance, Schema } from './configurations'
 import { Context, Journal, LogChannel } from '@youwol/logging'
 
 export interface UidTrait {
@@ -19,10 +19,15 @@ export interface ApiTrait {
     outputSlots: Array<IOs.OutputSlot>
 }
 
-export function moduleConnectors<TSchema extends Schema>(params: {
+export function moduleConnectors<
+    TSchema extends Schema,
+    TInputs = { [k: string]: unknown },
+>(params: {
     moduleId: string
-    inputs?: { [k: string]: IOs.Input }
-    outputs?: TOutputGenerator
+    inputs?: {
+        [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
+    }
+    outputs?: TOutputGenerator<TInputs>
     defaultConfiguration: Configurations.Configuration<TSchema>
     staticConfiguration: { [_k: string]: unknown }
     executionJournal: ExecutionJournal
@@ -32,7 +37,7 @@ export function moduleConnectors<TSchema extends Schema>(params: {
     outputSlots: Array<IOs.OutputSlot>
 } {
     const inputSlots = Object.entries(params.inputs || {}).map(
-        ([slotId, input]) => {
+        ([slotId, input]: [string, IOs.Input<unknown>]) => {
             return new IOs.InputSlot({
                 slotId: slotId,
                 moduleId: params.moduleId,
@@ -76,7 +81,11 @@ export function moduleConnectors<TSchema extends Schema>(params: {
             ),
         }),
         {},
-    )
+    ) as {
+        [Property in keyof TInputs]: Observable<
+            ProcessingMessage<TInputs[Property], ConfigInstance<TSchema>>
+        >
+    }
     const outputSlots = Object.entries(
         params.outputs({
             inputs: observers,
