@@ -47,3 +47,12 @@ export class Integer implements AttributeTrait<number> {
         this.__value = params.value && params.value
     }
 }
+
+export class Boolean implements AttributeTrait<boolean> {
+    public readonly __value: boolean
+
+    constructor(params: { value: boolean }) {
+        Object.assign(this, params)
+        this.__value = params.value && params.value
+    }
+}
