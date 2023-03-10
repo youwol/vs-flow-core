@@ -34,7 +34,7 @@ import {
 } from 'rxjs/operators'
 import { HttpModels } from '.'
 import { AssetsGateway } from '@youwol/http-clients'
-import { ProjectState, BatchCells } from '../../../lib/project'
+import { ProjectState, BatchCells, computeDelta } from '../../../lib/project'
 
 import { Workflow as WfModel } from '../../../lib/workflows'
 
@@ -258,14 +258,25 @@ export class AppState {
             projectsStore$: this.projectByCells$,
         })
         return batch.execute(this.emptyProject).then((project) => {
-            this.project$.next(project)
             const newHistory = new Map(this.projectByCells$.value)
+            if (remainingCells.length > 0) {
+                const reversed = [...remainingCells].reverse()
+                const last = reversed.find((c) => newHistory.has(c))
+                last &&
+                    computeDelta(
+                        newHistory.get(last),
+                        project,
+                    ).connections.removeElements.forEach((c) =>
+                        newHistory.get(last).getConnection(c).disconnect(),
+                    )
+            }
             remainingCells.forEach((cell) => {
                 newHistory.delete(cell)
             })
             if (index < this.cells$.value.length - 1) {
                 newHistory.set(this.cells$.value[index + 1], project)
             }
+            this.project$.next(project)
             this.projectByCells$.next(newHistory)
             return {
                 history: this.projectByCells$.value,
