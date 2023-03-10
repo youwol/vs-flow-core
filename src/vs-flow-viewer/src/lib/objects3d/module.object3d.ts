@@ -50,7 +50,8 @@ export class ModuleObject3d
         label.position.set(0, 0, 0)
         this.add(label)
         label.layers.set(0)
-        const builderView = this.module.builderView(this.module)
+        const builderView =
+            this.module.builderView && this.module.builderView(this.module)
         if (builderView) {
             const htmlElement = render(builderView) as unknown as HTMLDivElement
             htmlElement.style.fontSize = '4px'
