@@ -37,16 +37,16 @@ export class BuilderView extends Modules.DefaultImplementation<TSchema> {
                     input$: freeInput$,
                 },
                 outputs: ({ inputs }) => ({ output$: inputs.input$ }),
-                builderView: (mdle) => {
+                canvas: () => {
                     return {
                         children: [
                             child$(
-                                mdle.inputSlots[0].preparedMessage$,
+                                this.inputSlots[0].preparedMessage$,
                                 (message) => {
                                     const context = new Context('', {})
-                                    const conf = mdle.configuration.extractWith(
+                                    const conf = this.configuration.extractWith(
                                         {
-                                            values: mdle.configurationInstance,
+                                            values: this.configurationInstance,
                                             context,
                                         },
                                     )

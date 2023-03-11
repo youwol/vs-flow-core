@@ -79,10 +79,8 @@ export class ViewerModule extends Modules.DefaultImplementation<
             {
                 configuration,
                 inputs,
-                outputs: () => {
-                    return {}
-                },
-                builderView: () => undefined,
+                outputs: () => ({}),
+                html: () => renderHtmlElement(this),
             },
             fwdParameters,
         )
@@ -185,10 +183,10 @@ export class ViewerModule extends Modules.DefaultImplementation<
         })
         context.terminate()
     }
-
+    /*
     html() {
         return renderHtmlElement(this)
-    }
+    }*/
 }
 
 function renderHtmlElement(mdle: ViewerModule): VirtualDOM {

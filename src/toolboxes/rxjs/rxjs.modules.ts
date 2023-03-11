@@ -55,7 +55,6 @@ export class RxjsOf extends Modules.DefaultImplementation<TSchemaOf> {
                         }),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
@@ -93,7 +92,6 @@ export class RxjsFilter extends Modules.DefaultImplementation<TSchemaFilter> {
                         ),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
@@ -134,7 +132,6 @@ export class RxjsMap extends Modules.DefaultImplementation<TSchemaMap> {
                         ),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
@@ -171,7 +168,6 @@ export class RxjsTake extends Modules.DefaultImplementation<TSchemaTake> {
                         ),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
@@ -209,7 +205,6 @@ export class RxjsMergeMap extends Modules.DefaultImplementation<TSchemaMergeMap>
                         ),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
@@ -258,7 +253,6 @@ export class RxjsTimer extends Modules.DefaultImplementation<TSchemaTimer> {
                         ),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
@@ -311,7 +305,6 @@ export class RxjsCombineLatest extends Modules.DefaultImplementation<TSchemaStre
                         ),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
@@ -338,7 +331,6 @@ export class RxjsMerge extends Modules.DefaultImplementation<TSchemaStreamCombin
                         output$: merge(...Object.values(inputs)),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
@@ -373,7 +365,6 @@ export class RxjsForkJoin extends Modules.DefaultImplementation<TSchemaStreamCom
                         ),
                     }
                 },
-                builderView: () => undefined,
             },
             fwdParameters,
         )
