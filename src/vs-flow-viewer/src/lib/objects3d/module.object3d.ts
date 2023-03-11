@@ -51,7 +51,7 @@ export class ModuleObject3d
         this.add(label)
         label.layers.set(0)
         const builderView =
-            this.module.builderView && this.module.builderView(this.module)
+            this.module.canvas && this.module.canvas(this.module)
         if (builderView) {
             const htmlElement = render(builderView) as unknown as HTMLDivElement
             htmlElement.style.fontSize = '4px'
