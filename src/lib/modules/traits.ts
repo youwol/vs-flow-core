@@ -1,7 +1,6 @@
 import {
     InputMessage,
     IOs,
-    ModuleViewRenderer,
     ProcessingMessage,
     TOutputGenerator,
 } from './module'
@@ -11,6 +10,7 @@ import * as Configurations from './configurations'
 import { ConfigInstance, Schema } from './configurations'
 import { Context, Journal, LogChannel } from '@youwol/logging'
 import { noContract } from './IOs/contract'
+import { VirtualDOM } from '@youwol/flux-view'
 
 export interface UidTrait {
     uid: string
@@ -190,7 +190,11 @@ export interface SideEffectsTrait {
 }
 
 export interface HtmlTrait {
-    html?: () => ModuleViewRenderer
+    html: (config?) => VirtualDOM
+}
+
+export interface CanvasTrait {
+    canvas: (config?) => VirtualDOM
 }
 
 export interface PluginTrait {

@@ -13,6 +13,7 @@ import {
     UidTrait,
     HtmlTrait,
     JournalTrait,
+    CanvasTrait,
 } from './traits'
 import { Context, LogChannel } from '@youwol/logging'
 import { IEnvironment } from '../environment'
@@ -22,9 +23,10 @@ export * as IOs from './IOs'
 export type Implementation<TSchema extends Schema = Schema> = ApiTrait &
     ConfigurableTrait<TSchema> &
     UidTrait &
-    JournalTrait & {
+    JournalTrait &
+    Partial<HtmlTrait> &
+    Partial<CanvasTrait> & {
         environment: IEnvironment
-        builderView?: (Implementation) => VirtualDOM
     }
 
 export function uuidv4() {
@@ -36,19 +38,6 @@ export function uuidv4() {
             return v.toString(16)
         },
     )
-}
-
-export class ModuleViewBuilder {}
-export class ModuleViewRenderer {
-    wrapperAttributes: { [k: string]: string } = {}
-    htmlElement: HTMLElement
-
-    constructor(params: {
-        wrapperAttributes?: { [k: string]: string }
-        htmlElement: HTMLElement
-    }) {
-        Object.assign(this, params)
-    }
 }
 
 export interface Declaration {
@@ -94,8 +83,8 @@ export type UserArgs<TSchema extends Schema, TInputs> = {
         [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
     }
     outputs?: TOutputGenerator<TInputs, ConfigInstance<TSchema>>
-    builderView?: (instance: Implementation<TSchema>) => ModuleViewBuilder
-    renderView?: (instance: Implementation<TSchema>) => ModuleViewRenderer
+    canvas?: (config?) => VirtualDOM
+    html?: (config?) => VirtualDOM
 }
 
 type extractGeneric<Type> = Type extends IOs.Input<infer X> ? X : never
@@ -124,13 +113,10 @@ export type ForwardArgs = {
     environment: IEnvironment
 }
 
-type TDefaultImplementation<TSchema extends Schema> = Implementation<TSchema> &
-    HtmlTrait
-
 export class DefaultImplementation<
     TSchema extends Schema,
     TInputs = { [k: string]: unknown },
-> implements TDefaultImplementation<TSchema>
+> implements Implementation<TSchema>
 {
     public readonly uid: string = uuidv4()
     public readonly environment: IEnvironment
@@ -140,12 +126,13 @@ export class DefaultImplementation<
         [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
     }
     public readonly outputs?: TOutputGenerator<TInputs> = () => ({})
-    public readonly builderView: () => ModuleViewBuilder
-    public readonly renderView?: () => ModuleViewRenderer
 
     public readonly inputSlots = new Array<IOs.InputSlot>()
     public readonly outputSlots = new Array<IOs.OutputSlot>()
     public readonly journal: ExecutionJournal
+
+    public readonly canvas?: (config?) => VirtualDOM
+    public readonly html?: (config?) => VirtualDOM
 
     constructor(
         params: UserArgs<TSchema, TInputs>,
