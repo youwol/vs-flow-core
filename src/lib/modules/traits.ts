@@ -1,4 +1,5 @@
 import {
+    extractGeneric,
     InputMessage,
     IOs,
     ProcessingMessage,
@@ -16,7 +17,9 @@ export interface UidTrait {
     uid: string
 }
 export interface ApiTrait {
-    inputSlots: Array<IOs.InputSlot>
+    inputSlots: {
+        [k: string]: IOs.InputSlot<unknown>
+    }
     outputSlots: Array<IOs.OutputSlot>
 }
 
@@ -77,7 +80,11 @@ export function moduleConnectors<
     executionJournal: ExecutionJournal
     context: Context
 }): {
-    inputSlots: Array<IOs.InputSlot>
+    inputSlots: {
+        [Property in keyof TInputs]: IOs.InputSlot<
+            extractGeneric<TInputs[Property]>
+        >
+    }
     outputSlots: Array<IOs.OutputSlot>
 } {
     const inputSlots = Object.entries(params.inputs || {}).map(
@@ -112,7 +119,10 @@ export function moduleConnectors<
         {},
     ) as {
         [Property in keyof TInputs]: Observable<
-            ProcessingMessage<TInputs[Property], ConfigInstance<TSchema>>
+            ProcessingMessage<
+                extractGeneric<TInputs[Property]>,
+                ConfigInstance<TSchema>
+            >
         >
     }
     const outputSlots = Object.entries(

@@ -114,9 +114,8 @@ export class Connection
         const startSlot = startModule.outputSlots.find(
             (slot) => slot.slotId == this.start.slotId,
         )
-        const endSlot = endModule.inputSlots.find(
-            (slot) => slot.slotId == this.end.slotId,
-        )
+        const endSlot = endModule.inputSlots[this.end.slotId]
+
         const adaptor = this.configurationInstance.adaptor
 
         this.subscription = startSlot.observable$

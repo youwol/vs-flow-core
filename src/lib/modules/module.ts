@@ -127,7 +127,11 @@ export class DefaultImplementation<
     }
     public readonly outputs?: TOutputGenerator<TInputs> = () => ({})
 
-    public readonly inputSlots = new Array<IOs.InputSlot>()
+    public readonly inputSlots: {
+        [Property in keyof TInputs]: IOs.InputSlot<
+            extractGeneric<TInputs[Property]>
+        >
+    }
     public readonly outputSlots = new Array<IOs.OutputSlot>()
     public readonly journal: ExecutionJournal
 
