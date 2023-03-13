@@ -1,4 +1,4 @@
-import { IOs, ProcessingMessage } from '../../lib/modules'
+import { IOs } from '../../lib/modules'
 import { Configuration, Attributes } from '../../lib/modules/configurations'
 import {
     Color,
@@ -45,14 +45,8 @@ const inputs = {
 export class PluginsGateway {
     scene$ = new ReplaySubject<Scene>(1)
 
-    //fluxScene$ = new ReplaySubject<{ old: FluxScene<Object3D>, updated: FluxScene<Object3D> }>(1)
-
-    /* Rendering div updated */
     renderingDiv$ = new ReplaySubject<HTMLDivElement>(1)
-
-    /* Control updated */
     controls$ = new ReplaySubject<TrackballControls>(1)
-
     mouseDown$ = new Subject<MouseEvent>()
     mouseMove$ = new Subject<MouseEvent>()
     mouseUp$ = new Subject<MouseEvent>()
@@ -144,7 +138,7 @@ export class ViewerModule extends Modules.DefaultImplementation<
                 viewerInstance: this,
             })
         } catch (e) {
-            console.error('Creation of webGl context failed')
+            console.error('Creation of webGl context failed.')
             this.renderer = undefined
         }
     }
@@ -181,10 +175,6 @@ export class ViewerModule extends Modules.DefaultImplementation<
         })
         context.terminate()
     }
-    /*
-    html() {
-        return renderHtmlElement(this)
-    }*/
 }
 
 function renderHtmlElement(mdle: ViewerModule): VirtualDOM {

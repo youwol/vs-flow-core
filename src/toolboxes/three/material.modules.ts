@@ -1,6 +1,6 @@
 import { Configuration, Attributes } from '../../lib/modules/configurations'
 import { Modules } from '../..'
-import { IOs, OutputMapper } from '../../lib/modules'
+import { IOs, OutputMapperArg } from '../../lib/modules'
 import { MeshStandardMaterial } from 'three'
 import { map, tap } from 'rxjs/operators'
 
@@ -35,10 +35,10 @@ export function standardMaterialModule(fwdParams) {
         input$: new IOs.Input<Record<string, never>>({}),
     }
 
-    const outputs: OutputMapper<typeof inputs, typeof configuration.schema> = ({
-        inputs,
-    }) => ({
-        output$: inputs.input$.pipe(
+    const outputs = (
+        arg: OutputMapperArg<typeof configuration.schema, typeof inputs>,
+    ) => ({
+        output$: arg.inputs.input$.pipe(
             map(({ configuration, context }) => {
                 const material = new MeshStandardMaterial({
                     transparent: configuration.visibility.opacity < 1,
