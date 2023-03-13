@@ -70,7 +70,7 @@ export type TOutputGenerator<TInputs, TConfig = unknown> = ({
 }: {
     inputs: {
         [Property in keyof TInputs]: Observable<
-            ProcessingMessage<TInputs[Property], TConfig>
+            ProcessingMessage<extractGeneric<TInputs[Property]>, TConfig>
         >
     }
     context: Context
@@ -80,14 +80,14 @@ export type TOutputGenerator<TInputs, TConfig = unknown> = ({
 export type UserArgs<TSchema extends Schema, TInputs> = {
     configuration: Configurations.Configuration<TSchema>
     inputs?: {
-        [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
+        [Property in keyof TInputs]: TInputs[Property]
     }
     outputs?: TOutputGenerator<TInputs, ConfigInstance<TSchema>>
     canvas?: (config?) => VirtualDOM
     html?: (config?) => VirtualDOM
 }
 
-type extractGeneric<Type> = Type extends IOs.Input<infer X> ? X : never
+export type extractGeneric<Type> = Type extends IOs.Input<infer X> ? X : never
 
 export type OutputMapper<TInputs, TConfigModel> = ({
     inputs,
@@ -115,7 +115,7 @@ export type ForwardArgs = {
 
 export class DefaultImplementation<
     TSchema extends Schema,
-    TInputs = { [k: string]: unknown },
+    TInputs = { [k: string]: IOs.Input<unknown> },
 > implements Implementation<TSchema>
 {
     public readonly uid: string = uuidv4()
@@ -123,7 +123,7 @@ export class DefaultImplementation<
     public readonly configuration: Configurations.Configuration<TSchema>
     public readonly configurationInstance: ConfigInstance<TSchema>
     public readonly inputs: {
-        [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
+        [Property in keyof TInputs]: TInputs[Property]
     }
     public readonly outputs?: TOutputGenerator<TInputs> = () => ({})
 

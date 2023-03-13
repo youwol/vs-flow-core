@@ -124,11 +124,11 @@ function parseConnection(
 
     return new Connection({
         start: {
-            slotId: beforeModule.outputSlots[startIndex].slotId,
+            slotId: Object.values(beforeModule.outputSlots)[startIndex].slotId,
             moduleId: beforeModule.uid,
         },
         end: {
-            slotId: afterModule.inputSlots[endIndex].slotId,
+            slotId: Object.values(afterModule.inputSlots)[endIndex].slotId,
             moduleId: afterModule.uid,
         },
         configuration: uid && options[uid] ? options[uid] : {},

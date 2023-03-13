@@ -69,7 +69,7 @@ export function moduleConnectors<
 >(params: {
     moduleId: string
     inputs?: {
-        [Property in keyof TInputs]: IOs.Input<TInputs[Property]>
+        [Property in keyof TInputs]: TInputs[Property]
     }
     outputs?: TOutputGenerator<TInputs>
     defaultConfiguration: Configurations.Configuration<TSchema>
@@ -141,7 +141,14 @@ export function moduleConnectors<
         })
     })
     return {
-        inputSlots,
+        inputSlots: inputSlots.reduce(
+            (acc, e) => ({ ...acc, [e.slotId]: e }),
+            {},
+        ) as {
+            [Property in keyof TInputs]: IOs.InputSlot<
+                extractGeneric<TInputs[Property]>
+            >
+        },
         outputSlots,
     }
 }

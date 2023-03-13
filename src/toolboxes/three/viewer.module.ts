@@ -61,7 +61,7 @@ export class PluginsGateway {
 
 export class ViewerModule extends Modules.DefaultImplementation<
     typeof configuration.schema,
-    { input$: { object: Object3D } }
+    typeof inputs
 > {
     public readonly pluginsGateway = new PluginsGateway()
 
@@ -84,11 +84,9 @@ export class ViewerModule extends Modules.DefaultImplementation<
             },
             fwdParameters,
         )
-        this.inputSlots[0].preparedMessage$.subscribe(
-            (message: ProcessingMessage<{ object: Object3D }>) => {
-                this.render(message.data.object, message.context)
-            },
-        )
+        this.inputSlots.input$.preparedMessage$.subscribe((message) => {
+            this.render(message.data.object, message.context)
+        })
 
         this.scene.background = new Color(0xaaaaaa)
         const light = new AmbientLight(0x404040)
