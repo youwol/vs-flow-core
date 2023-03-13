@@ -132,7 +132,8 @@ export class DefaultImplementation<
             extractGeneric<TInputs[Property]>
         >
     }
-    public readonly outputSlots = new Array<IOs.OutputSlot>()
+    public readonly outputSlots: { [_k: string]: IOs.OutputSlot }
+
     public readonly journal: ExecutionJournal
 
     public readonly canvas?: (config?) => VirtualDOM

@@ -111,9 +111,8 @@ export class Connection
     connect({ apiFinder }: { apiFinder: (uid: string) => ApiTrait }) {
         const startModule = apiFinder(this.start.moduleId)
         const endModule = apiFinder(this.end.moduleId)
-        const startSlot = startModule.outputSlots.find(
-            (slot) => slot.slotId == this.start.slotId,
-        )
+        const startSlot = startModule.outputSlots[this.start.slotId]
+
         const endSlot = endModule.inputSlots[this.end.slotId]
 
         const adaptor = this.configurationInstance.adaptor

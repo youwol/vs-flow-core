@@ -98,9 +98,9 @@ export class ProjectState {
     }
 
     getObservable({ moduleId, slotId }: { moduleId: string; slotId: string }) {
-        return this.main.modules
-            .find((m) => m.uid == moduleId)
-            .outputSlots.find((s) => s.slotId == slotId).observable$
+        return this.main.modules.find((m) => m.uid == moduleId).outputSlots[
+            slotId
+        ].observable$
     }
 
     getConnection(connectionId: string) {

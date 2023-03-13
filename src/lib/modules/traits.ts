@@ -20,7 +20,9 @@ export interface ApiTrait {
     inputSlots: {
         [k: string]: IOs.InputSlot<unknown>
     }
-    outputSlots: Array<IOs.OutputSlot>
+    outputSlots: {
+        [k: string]: IOs.OutputSlot<unknown>
+    }
 }
 
 function prepareMessage(
@@ -85,7 +87,9 @@ export function moduleConnectors<
             extractGeneric<TInputs[Property]>
         >
     }
-    outputSlots: Array<IOs.OutputSlot>
+    outputSlots: {
+        [_k: string]: IOs.OutputSlot
+    }
 } {
     const inputSlots = Object.entries(params.inputs || {}).map(
         ([slotId, input]: [string, IOs.Input<unknown>]) => {
@@ -159,7 +163,10 @@ export function moduleConnectors<
                 extractGeneric<TInputs[Property]>
             >
         },
-        outputSlots,
+        outputSlots: outputSlots.reduce(
+            (acc, e) => ({ ...acc, [e.slotId]: e }),
+            {},
+        ),
     }
 }
 export interface ConfigurableTrait<TSchema extends Schema> {
