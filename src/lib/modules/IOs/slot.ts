@@ -36,7 +36,7 @@ export class OutputSlot<T = unknown> implements Slot {
     constructor(params: {
         slotId: string
         moduleId: string
-        observable$: Observable<Message>
+        observable$: Observable<Message<T>>
     }) {
         Object.assign(this, params)
     }

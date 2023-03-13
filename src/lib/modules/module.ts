@@ -63,7 +63,7 @@ export type ProcessingMessage<TData = unknown, TConfig = unknown> = {
     configuration: TConfig
 }
 
-export type TOutputGenerator<TInputs, TConfig = unknown> = ({
+export type OutputGenerator<TInputs, TConfig = unknown> = ({
     inputs,
     context,
     configuration,
@@ -82,29 +82,30 @@ export type UserArgs<TSchema extends Schema, TInputs> = {
     inputs?: {
         [Property in keyof TInputs]: TInputs[Property]
     }
-    outputs?: TOutputGenerator<TInputs, ConfigInstance<TSchema>>
+    outputs?: (
+        arg: OutputMapperArg<TSchema, TInputs>,
+    ) => Record<string, Observable<OutputMessage>>
     canvas?: (config?) => VirtualDOM
     html?: (config?) => VirtualDOM
 }
 
 export type extractGeneric<Type> = Type extends IOs.Input<infer X> ? X : never
+export type extractGenericObs<Type> = Type extends Observable<infer X>
+    ? X
+    : never
 
-export type OutputMapper<TInputs, TConfigModel> = ({
-    inputs,
-    context,
-    configuration,
-}: {
+export type OutputMapperArg<TConfigModel, TInputs> = {
     inputs: {
         [Property in keyof TInputs]: Observable<
             ProcessingMessage<
                 extractGeneric<TInputs[Property]>,
-                ConfigInstance<ConfigInstance<TConfigModel>>
+                ConfigInstance<TConfigModel>
             >
         >
     }
     context: Context
     configuration: ConfigInstance<TConfigModel>
-}) => { [k: string]: Observable<OutputMessage> }
+}
 
 export type ForwardArgs = {
     uid?: string
@@ -116,6 +117,9 @@ export type ForwardArgs = {
 export class DefaultImplementation<
     TSchema extends Schema,
     TInputs = { [k: string]: IOs.Input<unknown> },
+    TOutputs extends (...args) => {
+        [k: string]: Observable<unknown>
+    } = OutputGenerator<TInputs, ConfigInstance<TSchema>>,
 > implements Implementation<TSchema>
 {
     public readonly uid: string = uuidv4()
@@ -125,15 +129,19 @@ export class DefaultImplementation<
     public readonly inputs: {
         [Property in keyof TInputs]: TInputs[Property]
     }
-    public readonly outputs?: TOutputGenerator<TInputs> = () => ({})
+    public readonly outputs?: OutputGenerator<TInputs> = () => ({})
 
     public readonly inputSlots: {
         [Property in keyof TInputs]: IOs.InputSlot<
             extractGeneric<TInputs[Property]>
         >
     }
-    public readonly outputSlots: { [_k: string]: IOs.OutputSlot }
 
+    public readonly outputSlots: {
+        [Property in keyof ReturnType<TOutputs>]: IOs.OutputSlot<
+            extractGenericObs<ReturnType<TOutputs>[Property]>
+        >
+    }
     public readonly journal: ExecutionJournal
 
     public readonly canvas?: (config?) => VirtualDOM
@@ -158,7 +166,11 @@ export class DefaultImplementation<
             context: constructorContext,
         })
 
-        const { inputSlots, outputSlots } = moduleConnectors({
+        const { inputSlots, outputSlots } = moduleConnectors<
+            TSchema,
+            TInputs,
+            TOutputs
+        >({
             moduleId: this.uid,
             inputs: this.inputs,
             outputs: this.outputs,

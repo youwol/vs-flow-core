@@ -1,9 +1,10 @@
 import {
     extractGeneric,
+    extractGenericObs,
     InputMessage,
     IOs,
+    OutputGenerator,
     ProcessingMessage,
-    TOutputGenerator,
 } from './module'
 import { Observable, ReplaySubject } from 'rxjs'
 import { filter, map, tap } from 'rxjs/operators'
@@ -71,12 +72,15 @@ function prepareMessage(
 export function moduleConnectors<
     TSchema extends Schema,
     TInputs = { [k: string]: unknown },
+    TOutputs extends (...args) => { [k: string]: unknown } = (...args) => {
+        [k: string]: unknown
+    },
 >(params: {
     moduleId: string
     inputs?: {
         [Property in keyof TInputs]: TInputs[Property]
     }
-    outputs?: TOutputGenerator<TInputs>
+    outputs?: OutputGenerator<TInputs>
     defaultConfiguration: Configurations.Configuration<TSchema>
     staticConfiguration: { [_k: string]: unknown }
     executionJournal: ExecutionJournal
@@ -88,7 +92,9 @@ export function moduleConnectors<
         >
     }
     outputSlots: {
-        [_k: string]: IOs.OutputSlot
+        [Property in keyof ReturnType<TOutputs>]: IOs.OutputSlot<
+            extractGenericObs<ReturnType<TOutputs>[Property]>
+        >
     }
 } {
     const inputSlots = Object.entries(params.inputs || {}).map(
@@ -166,7 +172,11 @@ export function moduleConnectors<
         outputSlots: outputSlots.reduce(
             (acc, e) => ({ ...acc, [e.slotId]: e }),
             {},
-        ),
+        ) as {
+            [Property in keyof ReturnType<TOutputs>]: IOs.OutputSlot<
+                extractGenericObs<ReturnType<TOutputs>[Property]>
+            >
+        },
     }
 }
 export interface ConfigurableTrait<TSchema extends Schema> {
